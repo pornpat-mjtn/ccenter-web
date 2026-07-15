@@ -667,45 +667,47 @@ export default function ManagerPortal() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fc] text-gray-800 font-sans">
       {/* Navbar */}
-      <nav className="bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 py-3 flex justify-between items-center shrink-0 shadow-[0_2px_15px_rgb(0,0,0,0.03)] z-20 sticky top-0 overflow-x-auto min-w-max">
-        <div className="font-bold text-xl text-gray-800 flex items-center gap-2 shrink-0">
-          <img src="/logo-ccenter.png" alt="C Center" className="w-8 h-8 object-contain" /> C Center <span className="text-sm font-normal text-gray-500 ml-1">Manager View</span>
-        </div>
-        <div className="flex gap-3 items-center shrink-0">
-          <div className="flex items-center bg-slate-50 border rounded-lg px-2 py-1 gap-1 shrink-0 whitespace-nowrap">
-            <span className="text-xs text-slate-500 font-medium">แสดงพนักงาน:</span>
-            <select 
-              value={staffFilter} 
-              onChange={(e) => setStaffFilter(e.target.value)}
-              className="text-xs font-bold bg-transparent outline-none py-1"
-            >
-              <option value="All">ดูทุกคน (All Staff)</option>
-              {staffs.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-            </select>
+      <nav className="bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 py-3 shrink-0 shadow-[0_2px_15px_rgb(0,0,0,0.03)] z-20 sticky top-0 overflow-x-auto w-full">
+        <div className="flex justify-between items-center min-w-[1000px] w-full">
+          <div className="font-bold text-xl text-gray-800 flex items-center gap-2 shrink-0">
+            <img src="/logo-ccenter.png" alt="C Center" className="w-8 h-8 object-contain" /> C Center <span className="text-sm font-normal text-gray-500 ml-1">Manager View</span>
           </div>
+          <div className="flex gap-3 items-center shrink-0">
+            <div className="flex items-center bg-slate-50 border rounded-lg px-2 py-1 gap-1 shrink-0 whitespace-nowrap">
+              <span className="text-xs text-slate-500 font-medium">แสดงพนักงาน:</span>
+              <select 
+                value={staffFilter} 
+                onChange={(e) => setStaffFilter(e.target.value)}
+                className="text-xs font-bold bg-transparent outline-none py-1"
+              >
+                <option value="All">ดูทุกคน (All Staff)</option>
+                {staffs.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+              </select>
+            </div>
 
-          <div className="flex items-center bg-slate-50 rounded-lg border px-1 py-1 shrink-0">
-            <button onClick={() => setZoom(Math.max(60, zoom - 10))} className="p-1 hover:bg-slate-200 rounded"><ZoomOut size={16} /></button>
-            <span className="text-xs font-bold w-12 text-center">{zoom}%</span>
-            <button onClick={() => setZoom(Math.min(120, zoom + 10))} className="p-1 hover:bg-slate-200 rounded"><ZoomIn size={16} /></button>
+            <div className="flex items-center bg-slate-50 rounded-lg border px-1 py-1 shrink-0">
+              <button onClick={() => setZoom(Math.max(60, zoom - 10))} className="p-1 hover:bg-slate-200 rounded"><ZoomOut size={16} /></button>
+              <span className="text-xs font-bold w-12 text-center">{zoom}%</span>
+              <button onClick={() => setZoom(Math.min(120, zoom + 10))} className="p-1 hover:bg-slate-200 rounded"><ZoomIn size={16} /></button>
+            </div>
+
+            <button onClick={loadData} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0" title="อัปเดตงาน">
+              <RefreshCw size={15} className="text-sky-500" /> อัปเดตงาน
+            </button>
+
+            <button onClick={openPrintModal} className="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-[0_4px_10px_rgb(251,191,36,0.2)] flex items-center gap-1.5 transition-all transform hover:-translate-y-0.5 whitespace-nowrap shrink-0">
+              <Printer size={15} /> ปริ้นท์ Daily Plan
+            </button>
+            <button onClick={() => setIsStaffModalOpen(true)} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0">
+              <Users size={15} /> จัดการพนักงาน
+            </button>
+            <button onClick={handleChangePIN} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0">
+              <Key size={15} /> เปลี่ยนรหัส PIN
+            </button>
+            <button onClick={() => router.push('/')} className="text-slate-400 hover:text-red-500 p-1.5 transition shrink-0">
+              <LogOut size={20} />
+            </button>
           </div>
-
-          <button onClick={loadData} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0" title="อัปเดตงาน">
-            <RefreshCw size={15} className="text-sky-500" /> อัปเดตงาน
-          </button>
-
-          <button onClick={openPrintModal} className="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-[0_4px_10px_rgb(251,191,36,0.2)] flex items-center gap-1.5 transition-all transform hover:-translate-y-0.5 whitespace-nowrap shrink-0">
-            <Printer size={15} /> ปริ้นท์ Daily Plan
-          </button>
-          <button onClick={() => setIsStaffModalOpen(true)} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0">
-            <Users size={15} /> จัดการพนักงาน
-          </button>
-          <button onClick={handleChangePIN} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0">
-            <Key size={15} /> เปลี่ยนรหัส PIN
-          </button>
-          <button onClick={() => router.push('/')} className="text-slate-400 hover:text-red-500 p-1.5 transition shrink-0">
-            <LogOut size={20} />
-          </button>
         </div>
       </nav>
 
