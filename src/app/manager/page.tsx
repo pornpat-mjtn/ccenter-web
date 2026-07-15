@@ -745,7 +745,7 @@ export default function ManagerPortal() {
       </div>
 
       {/* Kanban Board */}
-      <main className="flex-1 p-6 bg-[#f8f9fc]" id="board-container">
+      <main className="flex-1 overflow-x-auto p-6 bg-[#f8f9fc]" id="board-container">
         {region !== 'ภาคกลาง' && (
           <div className="mb-4 bg-sky-50 border border-sky-200 rounded-xl p-3 flex justify-between items-center shadow-[0_2px_10px_rgb(251,191,36,0.1)]">
             <div className="flex items-center gap-6 text-sm font-bold text-sky-900">
