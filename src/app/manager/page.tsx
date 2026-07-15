@@ -810,7 +810,7 @@ export default function ManagerPortal() {
                       <div 
                         ref={provided.innerRef} 
                         {...provided.droppableProps}
-                        className="flex-1 bg-white/50 backdrop-blur-sm p-3 rounded-b-2xl border-x border-b border-dashed border-gray-200 overflow-y-auto min-h-[250px] shadow-[inset_0_2px_10px_rgb(0,0,0,0.01)]"
+                        className="flex-1 bg-white p-3 rounded-b-2xl border-x border-b border-dashed border-gray-200 overflow-y-auto min-h-[250px] shadow-[inset_0_2px_10px_rgb(0,0,0,0.01)]"
                       >
                         {colTasks.map((t, index) => (
                           <Draggable key={t.id} draggableId={t.id!} index={index}>
