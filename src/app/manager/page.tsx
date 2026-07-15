@@ -263,24 +263,65 @@ export default function ManagerPortal() {
 
   const loadData = async () => {
     try {
-      const [taskRes, staffRes, configRes, editReqRes] = await Promise.all([
-        fetch(`/api/tasks?region=${region}`),
-        fetch(`/api/staff?region=${region}`),
-        fetch(`/api/region-config?region=${region}`),
-        fetch('/api/edit-requests')
-      ])
-      const tasksData = await taskRes.json() as any
-      const staffsData = await staffRes.json() as any
-      const configData = await configRes.json() as any
-      const editReqData = await editReqRes.json() as any
-      setTasks(tasksData)
-      setStaffs(staffsData)
-      setRegionConfig(configData)
-      if (Array.isArray(editReqData)) {
-        setEditRequests(editReqData)
+      // 1. Fetch tasks
+      try {
+        const res = await fetch(`/api/tasks?region=${region}`)
+        if (res.ok) {
+          const data = await res.json()
+          setTasks(Array.isArray(data) ? data : [])
+        } else {
+          console.error(`Failed to fetch tasks: ${res.status}`)
+        }
+      } catch (err) {
+        console.error('Error parsing tasks JSON:', err)
+      }
+
+      // 2. Fetch staff
+      try {
+        const res = await fetch(`/api/staff?region=${region}`)
+        if (res.ok) {
+          const data = await res.json()
+          setStaffs(Array.isArray(data) ? data : [])
+        } else {
+          console.error(`Failed to fetch staff: ${res.status}`)
+        }
+      } catch (err) {
+        console.error('Error parsing staff JSON:', err)
+      }
+
+      // 3. Fetch region config
+      try {
+        const res = await fetch(`/api/region-config?region=${region}`)
+        if (res.ok) {
+          const data = await res.json() as any
+          setRegionConfig({
+            staffName: data?.staffName || '',
+            startTime: data?.startTime || '',
+            carPlate: data?.carPlate || ''
+          })
+        } else {
+          console.error(`Failed to fetch region-config: ${res.status}`)
+        }
+      } catch (err) {
+        console.error('Error parsing region config JSON:', err)
+      }
+
+      // 4. Fetch edit requests
+      try {
+        const res = await fetch('/api/edit-requests')
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data)) {
+            setEditRequests(data)
+          }
+        } else {
+          console.error(`Failed to fetch edit-requests: ${res.status}`)
+        }
+      } catch (err) {
+        console.error('Error parsing edit requests JSON:', err)
       }
     } catch (e) {
-      console.error(e)
+      console.error('General loadData error:', e)
     }
   }
 
@@ -685,16 +726,6 @@ export default function ManagerPortal() {
           </button>
           <button onClick={() => setIsStaffModalOpen(true)} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5">
             <Users size={15} /> จัดการพนักงาน
-          </button>
-          <button
-            onClick={() => setIsEditRequestsModalOpen(true)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 border ${
-              editRequests.length > 0
-                ? 'bg-red-600 text-white border-red-500 hover:bg-red-700 animate-pulse'
-                : 'bg-white text-gray-700 border-gray-200'
-            }`}
-          >
-            🔔 อนุมัติการแก้ไข ({editRequests.length})
           </button>
           <button onClick={handleChangePIN} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5">
             <Key size={15} /> เปลี่ยนรหัส PIN

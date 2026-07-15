@@ -118,34 +118,15 @@ export default function StaffPortal() {
     e.preventDefault()
     try {
       if (editingTask) {
-        const originalFields = {
-          date: new Date(editingTask.date).toISOString().split('T')[0],
-          region: editingTask.region,
-          customerName: editingTask.customerName || '',
-          phone: editingTask.phone || '',
-          details: editingTask.details,
-          lift: editingTask.lift || false,
-          liftPlate: editingTask.liftPlate || '',
-          location: editingTask.location || '',
-          time: editingTask.time || '',
-          admin: editingTask.admin,
-          driverName: editingTask.driverName || '',
-          startTime: editingTask.startTime || '',
-          car: editingTask.car || ''
-        }
-        await fetch('/api/edit-requests', {
+        const payload = { ...formData, id: editingTask.id }
+        await fetch('/api/tasks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            taskId: editingTask.id,
-            originalFields,
-            requestedFields: formData,
-            admin: formData.admin
-          })
+          body: JSON.stringify(payload)
         })
         setIsModalOpen(false)
         loadTasks()
-        Swal.fire('สำเร็จ', 'ส่งคำขอแก้ไขไปยังผู้จัดการแล้ว รอการอนุมัติ', 'success')
+        Swal.fire('สำเร็จ', 'แก้ไขข้อมูลเรียบร้อย', 'success')
       } else {
         const payload = { ...formData }
         await fetch('/api/tasks', {
@@ -304,11 +285,6 @@ export default function StaffPortal() {
                     <td className="px-6 py-4 whitespace-nowrap min-w-[200px]">
                       <div className="flex items-center flex-wrap gap-1">
                         <b>{t.customerName}</b>
-                        {pendingRequests.some((req: any) => req.taskId === t.id) && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 animate-pulse">
-                            🔴 รออนุมัติแก้ไข
-                          </span>
-                        )}
                       </div>
                       <span className="text-gray-500 text-xs flex items-center mt-1"><Phone className="w-3 h-3 mr-1" /> {t.phone}</span>
                     </td>
@@ -324,24 +300,7 @@ export default function StaffPortal() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
-                      {pendingRequests.some((req: any) => req.taskId === t.id) ? (
-                        <button 
-                          onClick={() => {
-                            Swal.fire({
-                              icon: 'warning',
-                              title: 'อยู่ระหว่างรออนุมัติ',
-                              text: 'งานนี้ส่งคำขอแก้ไขไปแล้วและกำลังรอผู้จัดการอนุมัติ ไม่สามารถแก้ไขซ้ำได้ในขณะนี้',
-                              confirmButtonText: 'ตกลง'
-                            })
-                          }} 
-                          className="text-gray-400 cursor-not-allowed" 
-                          title="อยู่ระหว่างรออนุมัติ"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                      ) : (
-                        <button onClick={() => openEditModal(t)} className="text-sky-600 hover:text-sky-800" title="แก้ไขงาน"><Edit className="w-4 h-4" /></button>
-                      )}
+                      <button onClick={() => openEditModal(t)} className="text-sky-600 hover:text-sky-800" title="แก้ไขงาน"><Edit className="w-4 h-4" /></button>
                     </td>
                   </tr>
                 ))
