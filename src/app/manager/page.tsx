@@ -206,8 +206,14 @@ export default function ManagerPortal() {
         Swal.fire({ icon: 'success', title: 'อนุมัติการแก้ไขสำเร็จ', timer: 1500, showConfirmButton: false })
         loadData()
       } else {
-        const errorData = await res.json() as any
-        Swal.fire('Error', errorData.error || 'ไม่สามารถอนุมัติได้', 'error')
+        let errorMsg = 'ไม่สามารถอนุมัติได้'
+        try {
+          const errorData = await res.json() as any
+          errorMsg = errorData.error || errorMsg
+        } catch {
+          errorMsg = `Server Error (${res.status})`
+        }
+        Swal.fire('Error', errorMsg, 'error')
       }
     } catch (error: any) {
       Swal.fire('Error', `ไม่สามารถอนุมัติได้: ${error.message || String(error)}`, 'error')
@@ -236,8 +242,14 @@ export default function ManagerPortal() {
           Swal.fire('ปฏิเสธแล้ว!', 'ปฏิเสธคำขอเรียบร้อย', 'success')
           loadData()
         } else {
-          const errorData = await res.json() as any
-          Swal.fire('Error', errorData.error || 'ไม่สามารถปฏิเสธคำขอได้', 'error')
+          let errorMsg = 'ไม่สามารถปฏิเสธคำขอได้'
+          try {
+            const errorData = await res.json() as any
+            errorMsg = errorData.error || errorMsg
+          } catch {
+            errorMsg = `Server Error (${res.status})`
+          }
+          Swal.fire('Error', errorMsg, 'error')
         }
       } catch (error: any) {
         Swal.fire('Error', `ไม่สามารถปฏิเสธคำขอได้: ${error.message || String(error)}`, 'error')
