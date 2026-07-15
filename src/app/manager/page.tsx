@@ -16,6 +16,8 @@ function PortalAwareItem({ provided, snapshot, children }: {
   snapshot: any
   children: React.ReactNode
 }) {
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+
   const child = (
     <div
       ref={provided.innerRef}
@@ -31,7 +33,7 @@ function PortalAwareItem({ provided, snapshot, children }: {
       {children}
     </div>
   )
-  if (snapshot.isDragging) {
+  if (snapshot.isDragging && !isTouchDevice) {
     return createPortal(child, document.body)
   }
   return child
