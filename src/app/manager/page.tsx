@@ -667,11 +667,11 @@ export default function ManagerPortal() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fc] text-gray-800 font-sans">
       {/* Navbar */}
-      <nav className="bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 py-3 flex justify-between items-center shrink-0 shadow-[0_2px_15px_rgb(0,0,0,0.03)] z-20 sticky top-0">
-        <div className="font-bold text-xl text-gray-800 flex items-center gap-2">
+      <nav className="bg-white/90 backdrop-blur-md border-b border-gray-200 px-4 md:px-6 py-3 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 md:gap-4 shrink-0 shadow-[0_2px_15px_rgb(0,0,0,0.03)] z-20 sticky top-0">
+        <div className="font-bold text-xl text-gray-800 flex items-center gap-2 shrink-0">
           <img src="/logo-ccenter.png" alt="C Center" className="w-8 h-8 object-contain" /> C Center <span className="text-sm font-normal text-gray-500 ml-1">Manager View</span>
         </div>
-        <div className="flex gap-3 items-center">
+        <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full xl:w-auto">
           <div className="flex items-center bg-slate-50 border rounded-lg px-2 py-1 gap-1">
             <span className="text-xs text-slate-500 font-medium">แสดงพนักงาน:</span>
             <select 
