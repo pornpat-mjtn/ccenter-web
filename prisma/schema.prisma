@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Task {
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now())
+  date           DateTime
+  region         String
+  admin          String
+  details        String
+  customerName   String?
+  phone          String?
+  location       String?
+  time           String?
+  assignee       String?  @default("รอแพลน") // Employee name or "รอแพลน"
+  order          Int      @default(0)
+  lift           Boolean  @default(false)
+  liftPlate      String?
+  driverName     String?
+  startTime      String?
+  car            String?
+}
+
+model Staff {
+  id        String  @id @default(uuid())
+  region    String
+  name      String  @unique
+  startTime String?
+  carPlate  String?
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model EditRequest {
+  id              String   @id @default(uuid())
+  taskId          String
+  originalFields  String
+  requestedFields String
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  admin           String
+  createdAt       DateTime @default(now())
+}

@@ -1,0 +1,3 @@
+ALTER TABLE "Task" ADD COLUMN "driverName" TEXT;
+ALTER TABLE "Task" ADD COLUMN "startTime" TEXT;
+ALTER TABLE "Task" ADD COLUMN "car" TEXT;

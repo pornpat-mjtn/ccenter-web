@@ -1,0 +1,11 @@
+├ Checking if file needs uploading
+│
+├ 🌀 Uploading 80bf424a-a977-401c-bb44-bff2c9cacb3b.d774861ecd48a411.sql
+│ 🌀 Uploading complete.
+│
+
+{
+  "error": {
+    "text": "no such table: Task: SQLITE_ERROR"
+  }
+}
