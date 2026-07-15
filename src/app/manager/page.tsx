@@ -10,35 +10,6 @@ import Swal from 'sweetalert2'
 
 const REGIONS = ['ภาคกลาง', 'ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
 
-// Portal wrapper — renders dragging card at document.body to fix coordinate offset
-function PortalAwareItem({ provided, snapshot, children }: {
-  provided: any
-  snapshot: any
-  children: React.ReactNode
-}) {
-  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
-
-  const child = (
-    <div
-      ref={provided.innerRef}
-      {...provided.draggableProps}
-      {...provided.dragHandleProps}
-      style={{
-        ...provided.draggableProps.style,
-        zIndex: snapshot.isDragging ? 9999 : 'auto',
-        opacity: snapshot.isDragging ? 0.92 : 1,
-        boxShadow: snapshot.isDragging ? '0 20px 40px rgba(0,0,0,0.18)' : undefined,
-      }}
-    >
-      {children}
-    </div>
-  )
-  if (snapshot.isDragging && !isTouchDevice) {
-    return createPortal(child, document.body)
-  }
-  return child
-}
-
 export default function ManagerPortal() {
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
@@ -844,8 +815,18 @@ export default function ManagerPortal() {
                         {colTasks.map((t, index) => (
                           <Draggable key={t.id} draggableId={t.id!} index={index}>
                             {(provided, snapshot) => (
-                              <PortalAwareItem provided={provided} snapshot={snapshot}>
-                                <div className={`${zoomStyle.cardPadding} rounded-2xl border mb-3 flex group cursor-grab active:cursor-grabbing transition-shadow duration-200 hover:shadow-[0_8px_25px_rgb(0,0,0,0.08)] ${t.lift ? 'border-sky-100 bg-gradient-to-br from-sky-50/50 to-white' : 'border-gray-100 bg-white'} shadow-[0_2px_12px_rgb(0,0,0,0.04)]`}>
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  zIndex: snapshot.isDragging ? 9999 : (provided.draggableProps.style as any)?.zIndex || 50,
+                                  opacity: snapshot.isDragging ? 0.92 : 1,
+                                  boxShadow: snapshot.isDragging ? '0 20px 40px rgba(0,0,0,0.18)' : undefined,
+                                }}
+                                className={`${zoomStyle.cardPadding} rounded-2xl border mb-3 flex group cursor-grab active:cursor-grabbing transition-shadow duration-200 hover:shadow-[0_8px_25px_rgb(0,0,0,0.08)] ${t.lift ? 'border-sky-100 bg-gradient-to-br from-sky-50/50 to-white' : 'border-gray-100 bg-white'} shadow-[0_2px_12px_rgb(0,0,0,0.04)]`}
+                              >
                                 {/* Left Index Sequence */}
                                 <div className="shrink-0 pt-0.5">
                                   <div className={`bg-slate-100 border border-slate-200 text-slate-500 font-bold ${zoomStyle.avatarSize} rounded-md flex items-center justify-center shadow-sm`}>
@@ -892,7 +873,6 @@ export default function ManagerPortal() {
                                   </div>
                                 </div>
                               </div>
-                              </PortalAwareItem>
                             )}
                           </Draggable>
                         ))}
