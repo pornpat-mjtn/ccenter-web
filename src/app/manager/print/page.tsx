@@ -266,6 +266,7 @@ function PrintComponent() {
           @media print {
             body { background: white !important; padding: 0 !important; }
             .printable-area { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            #print-buttons { display: none !important; }
           }
         `}</style>
       </div>
