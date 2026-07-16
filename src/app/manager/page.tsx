@@ -504,11 +504,20 @@ export default function ManagerPortal() {
 
     if (result.isConfirmed) {
       try {
-        await fetch(`/api/tasks/${id}`, { method: 'DELETE' })
-        loadData()
-        Swal.fire('ลบแล้ว!', 'ลบงานเรียบร้อย', 'success')
-      } catch (e) {
-        Swal.fire('Error', 'ไม่สามารถลบข้อมูลได้', 'error')
+        const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' })
+        if (res.ok) {
+          loadData()
+          Swal.fire('ลบแล้ว!', 'ลบงานเรียบร้อย', 'success')
+        } else {
+          let errorMsg = 'ไม่สามารถลบข้อมูลได้'
+          try {
+            const errData = await res.json() as any
+            errorMsg = errData.error || errorMsg
+          } catch {}
+          Swal.fire('Error', errorMsg, 'error')
+        }
+      } catch (e: any) {
+        Swal.fire('Error', e.message || 'ไม่สามารถลบข้อมูลได้', 'error')
       }
     }
   }
