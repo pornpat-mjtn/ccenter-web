@@ -821,9 +821,9 @@ export default function ManagerPortal() {
           handleDragEnd(result)
         }}
       >
-        <main className="flex-1 overflow-x-auto p-6 bg-[#f8f9fc]" id="board-container">
+        <main className="flex-1 overflow-x-auto bg-[#f8f9fc] pt-6" id="board-container">
           {region !== 'ภาคกลาง' && (
-            <div className="mb-4 bg-sky-50 border border-sky-200 rounded-xl p-3 flex justify-between items-center shadow-[0_2px_10px_rgb(251,191,36,0.1)]">
+            <div className="mb-4 mx-6 bg-sky-50 border border-sky-200 rounded-xl p-3 flex justify-between items-center shadow-[0_2px_10px_rgb(251,191,36,0.1)]">
               <div className="flex items-center gap-6 text-sm font-bold text-sky-900">
                 <span className="text-base text-sky-600">📌 ข้อมูลหลักประจำ{region}:</span>
                 <span>👤 ผู้รับงาน: <span className="text-gray-800">{regionConfig.staffName || '-'}</span></span>
@@ -835,7 +835,8 @@ export default function ManagerPortal() {
               </button>
             </div>
           )}
-          <div className={`flex ${zoomStyle.gapSize} h-full items-start min-w-max pb-4`}>
+          <div className={`flex ${zoomStyle.gapSize} h-full items-start min-w-max pb-6`}>
+            <div className="w-4 shrink-0" /> {/* Left Spacer */}
             {filteredColumns.map(colId => {
               const colTasks = tasks.filter(t => 
                 (dateFilter ? t.date.startsWith(dateFilter) : true) && 
@@ -958,6 +959,7 @@ export default function ManagerPortal() {
                 </div>
               )
             })}
+            <div className="w-4 shrink-0" /> {/* Right Spacer */}
           </div>
         </main>
       </DragDropContext>
