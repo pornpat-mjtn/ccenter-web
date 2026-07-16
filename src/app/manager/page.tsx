@@ -814,28 +814,28 @@ export default function ManagerPortal() {
       </div>
 
       {/* Kanban Board */}
-      <main className="flex-1 overflow-x-auto p-6 bg-[#f8f9fc]" id="board-container">
-        {region !== 'ภาคกลาง' && (
-          <div className="mb-4 bg-sky-50 border border-sky-200 rounded-xl p-3 flex justify-between items-center shadow-[0_2px_10px_rgb(251,191,36,0.1)]">
-            <div className="flex items-center gap-6 text-sm font-bold text-sky-900">
-              <span className="text-base text-sky-600">📌 ข้อมูลหลักประจำ{region}:</span>
-              <span>👤 ผู้รับงาน: <span className="text-gray-800">{regionConfig.staffName || '-'}</span></span>
-              <span>⏰ เวลาออก: <span className="text-gray-800">{regionConfig.startTime || '-'}</span></span>
-              <span>🚗 รถที่ใช้: <span className="text-gray-800">{regionConfig.carPlate || '-'}</span></span>
+      <DragDropContext 
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={(result) => {
+          setIsDragging(false)
+          handleDragEnd(result)
+        }}
+      >
+        <main className="flex-1 overflow-x-auto p-6 bg-[#f8f9fc]" id="board-container">
+          {region !== 'ภาคกลาง' && (
+            <div className="mb-4 bg-sky-50 border border-sky-200 rounded-xl p-3 flex justify-between items-center shadow-[0_2px_10px_rgb(251,191,36,0.1)]">
+              <div className="flex items-center gap-6 text-sm font-bold text-sky-900">
+                <span className="text-base text-sky-600">📌 ข้อมูลหลักประจำ{region}:</span>
+                <span>👤 ผู้รับงาน: <span className="text-gray-800">{regionConfig.staffName || '-'}</span></span>
+                <span>⏰ เวลาออก: <span className="text-gray-800">{regionConfig.startTime || '-'}</span></span>
+                <span>🚗 รถที่ใช้: <span className="text-gray-800">{regionConfig.carPlate || '-'}</span></span>
+              </div>
+              <button onClick={openRegionConfigModal} className="text-sky-600 hover:text-sky-800 bg-white border border-sky-200 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all hover:shadow hover:-translate-y-0.5">
+                <Edit size={14} className="inline mr-1" /> แก้ไขข้อมูลหลัก
+              </button>
             </div>
-            <button onClick={openRegionConfigModal} className="text-sky-600 hover:text-sky-800 bg-white border border-sky-200 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all hover:shadow hover:-translate-y-0.5">
-              <Edit size={14} className="inline mr-1" /> แก้ไขข้อมูลหลัก
-            </button>
-          </div>
-        )}
-        <div className={`flex ${zoomStyle.gapSize} h-full items-start min-w-max pb-4`}>
-          <DragDropContext 
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={(result) => {
-              setIsDragging(false)
-              handleDragEnd(result)
-            }}
-          >
+          )}
+          <div className={`flex ${zoomStyle.gapSize} h-full items-start min-w-max pb-4`}>
             {filteredColumns.map(colId => {
               const colTasks = tasks.filter(t => 
                 (dateFilter ? t.date.startsWith(dateFilter) : true) && 
@@ -958,9 +958,9 @@ export default function ManagerPortal() {
                 </div>
               )
             })}
-          </DragDropContext>
-        </div>
-      </main>
+          </div>
+        </main>
+      </DragDropContext>
 
       {/* 1. Manage Staff Modal */}
       {isStaffModalOpen && (
