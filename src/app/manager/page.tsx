@@ -835,7 +835,7 @@ export default function ManagerPortal() {
               </button>
             </div>
           )}
-          <div className={`flex ${zoomStyle.gapSize} h-full items-start min-w-max pb-6`}>
+          <div className={`flex ${zoomStyle.gapSize} h-full items-stretch min-w-max pb-6`}>
             <div className="w-4 shrink-0" /> {/* Left Spacer */}
             {filteredColumns.map(colId => {
               const colTasks = tasks.filter(t => 
