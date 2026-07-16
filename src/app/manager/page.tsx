@@ -874,6 +874,9 @@ export default function ManagerPortal() {
                     group="kanban"
                     animation={150}
                     ghostClass="opacity-50"
+                    delay={200}
+                    delayOnTouchOnly={true}
+                    fallbackTolerance={3}
                     data-droppable-id={colId}
                     onStart={() => setIsDragging(true)}
                     onEnd={(evt) => {
