@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { Task, Staff } from '@/types'
-import { LogOut, MapPin, ZoomIn, ZoomOut, Printer, Users, Cog, Plus, Trash, Bike, Clock, Phone, UserPen, Calendar, X, Edit, Key, RefreshCw } from 'lucide-react'
+import { LogOut, MapPin, ZoomIn, ZoomOut, Printer, Users, Cog, Plus, Trash, Bike, Clock, Phone, UserPen, Calendar, X, Edit, Key, RefreshCw, Save, History } from 'lucide-react'
 import Swal from 'sweetalert2'
 
 const REGIONS = ['ภาคกลาง', 'ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
@@ -667,6 +667,49 @@ export default function ManagerPortal() {
     }
   }
 
+  const handleSavePlan = async () => {
+    const targetDate = dateFilter || getTomorrowDate()
+    const tasksToSave = tasks.filter(t => t.date.startsWith(targetDate))
+    
+    try {
+      Swal.fire({
+        title: 'บันทึกแพลนงาน',
+        text: `คุณต้องการบันทึกประวัติแพลนงานของวันที่ ${new Date(targetDate).toLocaleDateString('th-TH')} ใช่หรือไม่?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#3085d6'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          Swal.showLoading()
+          const payload = {
+            date: targetDate,
+            snapshotData: JSON.stringify({
+              tasks: tasksToSave,
+              staffs: staffs,
+              region: region
+            })
+          }
+          
+          const res = await fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+
+          if (res.ok) {
+            Swal.fire('สำเร็จ', `บันทึกประวัติแพลนงานวันที่ ${new Date(targetDate).toLocaleDateString('th-TH')} เรียบร้อยแล้ว`, 'success')
+          } else {
+            Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกประวัติแพลนงานได้', 'error')
+          }
+        }
+      })
+    } catch (e) {
+      Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error')
+    }
+  }
+
   const zoomStyle = getZoomClasses(zoom)
 
   const columns = ['รอแพลน', ...staffs.map(s => s.name)]
@@ -701,6 +744,13 @@ export default function ManagerPortal() {
 
             <button onClick={loadData} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0" title="อัปเดตงาน">
               <RefreshCw size={15} className="text-sky-500" /> อัปเดตงาน
+            </button>
+
+            <button onClick={handleSavePlan} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0">
+              <Save size={15} /> บันทึกแพลน
+            </button>
+            <button onClick={() => router.push('/plan-history')} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0">
+              <History size={15} className="text-blue-500" /> ประวัติ
             </button>
 
             <button onClick={openPrintModal} className="bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-[0_4px_10px_rgb(251,191,36,0.2)] flex items-center gap-1.5 transition-all transform hover:-translate-y-0.5 whitespace-nowrap shrink-0">

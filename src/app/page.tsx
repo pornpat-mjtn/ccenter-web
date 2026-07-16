@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Task } from '@/types'
-import { Users, Lock, Plus, Clock, UserPen, Phone, MapPin, Edit, Trash, Bike, RefreshCw } from 'lucide-react'
+import { Users, Lock, Plus, Clock, UserPen, Phone, MapPin, Edit, Trash, Bike, RefreshCw, History } from 'lucide-react'
 import Swal from 'sweetalert2'
 
 export default function StaffPortal() {
@@ -194,14 +194,23 @@ export default function StaffPortal() {
         <div className="font-bold text-xl text-gray-800 flex items-center">
           <img src="/logo-ccenter.png" alt="C Center" className="w-8 h-8 mr-2 object-contain" /> C Center <span className="text-sm font-normal text-gray-500 ml-2 mt-1">Staff View</span>
         </div>
-        <button 
-          onClick={handleManagerLogin} 
-          disabled={loading}
-          className="text-gray-400 hover:text-sky-500 transition p-2.5 rounded-full hover:bg-sky-50"
-          title="Manager Login"
-        >
-          <Lock className="w-5 h-5" />
-        </button>
+        <div className="flex gap-2 items-center">
+          <button 
+            onClick={() => router.push('/plan-history')} 
+            className="text-gray-500 hover:text-blue-500 transition px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-blue-50 flex items-center gap-1.5 text-sm font-medium"
+            title="ประวัติแพลนงาน"
+          >
+            <History className="w-4 h-4 text-blue-500" /> ประวัติ
+          </button>
+          <button 
+            onClick={handleManagerLogin} 
+            disabled={loading}
+            className="text-gray-400 hover:text-sky-500 transition p-2.5 rounded-full hover:bg-sky-50"
+            title="Manager Login"
+          >
+            <Lock className="w-5 h-5" />
+          </button>
+        </div>
       </nav>
       <div className="max-w-6xl mx-auto px-4">
         {/* Dashboard Filters */}
