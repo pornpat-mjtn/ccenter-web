@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { ReactSortable } from 'react-sortablejs'
 import { Task, Staff } from '@/types'
 import { LogOut, MapPin, ZoomIn, ZoomOut, Printer, Users, Cog, Plus, Trash, Bike, Clock, Phone, UserPen, Calendar, X, Edit, Key, RefreshCw, Save, History } from 'lucide-react'
 import Swal from 'sweetalert2'
@@ -814,14 +814,7 @@ export default function ManagerPortal() {
       </div>
 
       {/* Kanban Board */}
-      <DragDropContext 
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={(result) => {
-          setIsDragging(false)
-          handleDragEnd(result)
-        }}
-      >
-        <main className="flex-1 overflow-x-auto bg-[#f8f9fc] pt-6" id="board-container">
+      <main className="flex-1 overflow-x-auto bg-[#f8f9fc] pt-6" id="board-container">
           {region !== 'ภาคกลาง' && (
             <div className="mb-4 mx-6 bg-sky-50 border border-sky-200 rounded-xl p-3 flex justify-between items-center shadow-[0_2px_10px_rgb(251,191,36,0.1)]">
               <div className="flex items-center gap-6 text-sm font-bold text-sky-900">
@@ -875,94 +868,97 @@ export default function ManagerPortal() {
                     <span className="bg-white/80 backdrop-blur border border-gray-100 px-2.5 rounded-full text-xs py-1 shadow-sm ml-2 shrink-0">{colTasks.length}</span>
                   </div>
                   
-                  <Droppable droppableId={colId}>
-                    {(provided) => (
-                      <div 
-                        ref={provided.innerRef} 
-                        {...provided.droppableProps}
-                        className="flex-1 bg-white p-3 rounded-b-2xl border-x border-b border-dashed border-gray-200 overflow-y-auto min-h-[250px] shadow-[inset_0_2px_10px_rgb(0,0,0,0.01)]"
+                  <ReactSortable
+                    list={colTasks as any}
+                    setList={() => {}} // State updates are handled globally via handleDragEnd
+                    group="kanban"
+                    animation={150}
+                    ghostClass="opacity-50"
+                    data-droppable-id={colId}
+                    onStart={() => setIsDragging(true)}
+                    onEnd={(evt) => {
+                      setIsDragging(false);
+                      const sourceId = evt.from.getAttribute('data-droppable-id');
+                      const destId = evt.to.getAttribute('data-droppable-id');
+                      const draggableId = evt.item.getAttribute('data-draggable-id');
+                      
+                      if (sourceId && destId && draggableId && evt.newIndex !== undefined && evt.oldIndex !== undefined) {
+                        if (sourceId === destId && evt.newIndex === evt.oldIndex) return;
+                        handleDragEnd({
+                          source: { droppableId: sourceId, index: evt.oldIndex },
+                          destination: { droppableId: destId, index: evt.newIndex },
+                          draggableId: draggableId
+                        } as any);
+                      }
+                    }}
+                    className="flex-1 bg-white p-3 rounded-b-2xl border-x border-b border-dashed border-gray-200 overflow-y-auto min-h-[250px] shadow-[inset_0_2px_10px_rgb(0,0,0,0.01)]"
+                  >
+                    {colTasks.map((t, index) => (
+                      <div
+                        key={t.id}
+                        data-draggable-id={t.id}
+                        className={`${zoomStyle.cardPadding} rounded-2xl border mb-3 flex group cursor-grab active:cursor-grabbing transition-shadow duration-200 hover:shadow-[0_8px_25px_rgb(0,0,0,0.08)] ${t.lift ? 'border-sky-100 bg-gradient-to-br from-sky-50/50 to-white' : 'border-gray-100 bg-white'} shadow-[0_2px_12px_rgb(0,0,0,0.04)]`}
                       >
-                        {colTasks.map((t, index) => (
-                          <Draggable key={t.id} draggableId={t.id!} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                style={{
-                                  ...provided.draggableProps.style,
-                                  zIndex: snapshot.isDragging ? 9999 : (provided.draggableProps.style as any)?.zIndex || 50,
-                                  opacity: snapshot.isDragging ? 0.92 : 1,
-                                  boxShadow: snapshot.isDragging ? '0 20px 40px rgba(0,0,0,0.18)' : undefined,
-                                }}
-                                className={`${zoomStyle.cardPadding} rounded-2xl border mb-3 flex group cursor-grab active:cursor-grabbing transition-shadow duration-200 hover:shadow-[0_8px_25px_rgb(0,0,0,0.08)] ${t.lift ? 'border-sky-100 bg-gradient-to-br from-sky-50/50 to-white' : 'border-gray-100 bg-white'} shadow-[0_2px_12px_rgb(0,0,0,0.04)]`}
-                              >
-                                {/* Left Index Sequence */}
-                                <div className="shrink-0 pt-0.5">
-                                  <div className={`bg-slate-100 border border-slate-200 text-slate-500 font-bold ${zoomStyle.avatarSize} rounded-md flex items-center justify-center shadow-sm`}>
-                                    {index + 1}
-                                  </div>
-                                </div>
+                        {/* Left Index Sequence */}
+                        <div className="shrink-0 pt-0.5">
+                          <div className={`bg-slate-100 border border-slate-200 text-slate-500 font-bold ${zoomStyle.avatarSize} rounded-md flex items-center justify-center shadow-sm`}>
+                            {index + 1}
+                          </div>
+                        </div>
 
-                                {/* Card Body */}
-                                <div className={`flex-1 min-w-0 ${zoomStyle.fontSize} text-slate-600`}>
-                                  <div className="flex justify-between items-start">
-                                    <div className={`font-bold text-slate-800 ${zoomStyle.titleSize} truncate mb-1`} title={t.customerName || ''}>
-                                      {t.customerName}
-                                    </div>
-                                    <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition duration-150">
-                                      <button onClick={() => openEditTaskModal(t)} className="text-slate-400 hover:text-blue-600 p-0.5"><Edit size={zoomStyle.iconSize + 1} /></button>
-                                      <button onClick={() => handleDeleteTask(t.id!)} className="text-slate-400 hover:text-red-600 p-0.5"><Trash size={zoomStyle.iconSize + 1} /></button>
-                                    </div>
-                                  </div>
-                                  
-                                  {t.lift && (
-                                    <div className="text-[10px] text-orange-700 bg-orange-100/60 border border-orange-200 rounded px-1.5 py-0.5 inline-flex items-center gap-1 mb-1.5 font-bold">
-                                      <Bike size={11} /> ยกรถ {t.liftPlate}
-                                    </div>
-                                  )}
-                                  
-                                  <div className="text-red-600 font-bold mb-1 flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" /> {t.details}
-                                  </div>
+                        {/* Card Body */}
+                        <div className={`flex-1 min-w-0 ${zoomStyle.fontSize} text-slate-600`}>
+                          <div className="flex justify-between items-start">
+                            <div className={`font-bold text-slate-800 ${zoomStyle.titleSize} truncate mb-1`} title={t.customerName || ''}>
+                              {t.customerName}
+                            </div>
+                            <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition duration-150">
+                              <button onClick={() => openEditTaskModal(t)} className="text-slate-400 hover:text-blue-600 p-0.5"><Edit size={zoomStyle.iconSize + 1} /></button>
+                              <button onClick={() => handleDeleteTask(t.id!)} className="text-slate-400 hover:text-red-600 p-0.5"><Trash size={zoomStyle.iconSize + 1} /></button>
+                            </div>
+                          </div>
+                          
+                          {t.lift && (
+                            <div className="text-[10px] text-orange-700 bg-orange-100/60 border border-orange-200 rounded px-1.5 py-0.5 inline-flex items-center gap-1 mb-1.5 font-bold">
+                              <Bike size={11} /> ยกรถ {t.liftPlate}
+                            </div>
+                          )}
+                          
+                          <div className="text-red-600 font-bold mb-1 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" /> {t.details}
+                          </div>
 
-                                  {t.phone && (
-                                    <div className="mb-1 flex items-center gap-1"><Phone size={zoomStyle.iconSize} className="text-slate-400 shrink-0" /> {t.phone}</div>
-                                  )}
+                          {t.phone && (
+                            <div className="mb-1 flex items-center gap-1"><Phone size={zoomStyle.iconSize} className="text-slate-400 shrink-0" /> {t.phone}</div>
+                          )}
 
-                                  {t.location && (
-                                    <div className="mb-1 flex items-start gap-1"><MapPin size={zoomStyle.iconSize} className="text-slate-400 shrink-0 mt-0.5" /> <span className="line-clamp-2" title={t.location}>{t.location}</span></div>
-                                  )}
+                          {t.location && (
+                            <div className="mb-1 flex items-start gap-1"><MapPin size={zoomStyle.iconSize} className="text-slate-400 shrink-0 mt-0.5" /> <span className="line-clamp-2" title={t.location}>{t.location}</span></div>
+                          )}
 
-                                  {t.info && (
-                                    <div className="mb-1 text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 mt-1 font-semibold">
-                                      <span>📝 ข้อมูล: {t.info}</span>
-                                    </div>
-                                  )}
+                          {t.info && (
+                            <div className="mb-1 text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 mt-1 font-semibold">
+                              <span>📝 ข้อมูล: {t.info}</span>
+                            </div>
+                          )}
 
-                                  <div className="text-blue-800 bg-blue-50/50 border border-blue-100 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 mt-1 font-semibold">
-                                    <Calendar size={zoomStyle.iconSize} /> นัดหมาย: {new Date(t.date).toLocaleDateString('th-TH')} {t.time}
-                                  </div>
+                          <div className="text-blue-800 bg-blue-50/50 border border-blue-100 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 mt-1 font-semibold">
+                            <Calendar size={zoomStyle.iconSize} /> นัดหมาย: {new Date(t.date).toLocaleDateString('th-TH')} {t.time}
+                          </div>
 
-                                  <div className="pt-2 mt-2 border-t border-slate-100 flex items-center gap-1 text-[10px] text-slate-400">
-                                    <UserPen size={zoomStyle.iconSize} /> เพิ่มโดย: {t.admin}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
+                          <div className="pt-2 mt-2 border-t border-slate-100 flex items-center gap-1 text-[10px] text-slate-400">
+                            <UserPen size={zoomStyle.iconSize} /> เพิ่มโดย: {t.admin}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </Droppable>
+                    ))}
+                  </ReactSortable>
                 </div>
               )
             })}
             <div className="w-4 shrink-0" /> {/* Right Spacer */}
           </div>
         </main>
-      </DragDropContext>
 
       {/* 1. Manage Staff Modal */}
       {isStaffModalOpen && (
