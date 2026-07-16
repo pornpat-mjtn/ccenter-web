@@ -27,6 +27,7 @@ model Task {
   driverName     String?
   startTime      String?
   car            String?
+  info           String?
 }
 
 model Staff {

@@ -16,6 +16,7 @@ export interface Task {
   driverName?: string | null
   startTime?: string | null
   car?: string | null
+  info?: string | null
 }
 
 export interface Staff {

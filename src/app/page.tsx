@@ -31,7 +31,8 @@ export default function StaffPortal() {
     details: '', lift: false, liftPlate: '', location: '', time: '', admin: '',
     driverName: '',
     startTime: '',
-    car: ''
+    car: '',
+    info: ''
   })
 
   useEffect(() => {
@@ -148,7 +149,7 @@ export default function StaffPortal() {
     setFormData({
       date: getTomorrowDate(), region: 'ภาคกลาง', customerName: '', phone: '',
       details: '', lift: false, liftPlate: '', location: '', time: '', admin: '',
-      driverName: '', startTime: '', car: ''
+      driverName: '', startTime: '', car: '', info: ''
     })
     setIsModalOpen(true)
   }
@@ -168,7 +169,8 @@ export default function StaffPortal() {
       admin: task.admin,
       driverName: task.driverName || '',
       startTime: task.startTime || '',
-      car: task.car || ''
+      car: task.car || '',
+      info: task.info || ''
     })
     setIsModalOpen(true)
   }
@@ -298,6 +300,11 @@ export default function StaffPortal() {
                           <Bike className="w-3 h-3 mr-1" /> ยกรถ {t.liftPlate}
                         </span>
                       )}
+                      {t.info && (
+                        <span className="inline-flex items-center bg-slate-50 text-slate-700 font-medium px-2 py-0.5 rounded-md text-[11px] ml-2 mt-1 border border-slate-200">
+                          📝 ข้อมูล: {t.info}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
                       <button onClick={() => openEditModal(t)} className="text-sky-600 hover:text-sky-800" title="แก้ไขงาน"><Edit className="w-4 h-4" /></button>
@@ -377,6 +384,11 @@ export default function StaffPortal() {
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">ระบุเวลา</label>
                     <input type="text" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 outline-none text-gray-800 text-sm focus:border-gray-900 focus:ring-2 focus:ring-gray-900/5 transition-all" placeholder="เช่น 08:00-12:00" />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">ข้อมูล (รายละเอียดรถ, ไฟแนนซ์, ยอดปิด)</label>
+                  <input type="text" value={formData.info || ''} onChange={e => setFormData({...formData, info: e.target.value})} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 outline-none text-gray-800 text-sm focus:border-gray-900 focus:ring-2 focus:ring-gray-900/5 transition-all" placeholder="ระบุรายละเอียดรถ, ไฟแนนซ์, ยอดปิด" />
                 </div>
 
                 <div>

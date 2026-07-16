@@ -53,7 +53,7 @@ export default function ManagerPortal() {
   const [taskFormData, setTaskFormData] = useState({
     date: getTomorrowDate(), region: 'ภาคกลาง', customerName: '', phone: '',
     details: '', lift: false, liftPlate: '', location: '', time: '', admin: '',
-    driverName: '', startTime: '', car: ''
+    driverName: '', startTime: '', car: '', info: ''
   })
 
   // Region Config (for non-Central)
@@ -79,7 +79,8 @@ export default function ManagerPortal() {
     admin: 'แอดมิน',
     driverName: 'ผู้รับงาน (พนักงาน)',
     startTime: 'เวลาเริ่มงาน',
-    car: 'รถที่ใช้'
+    car: 'รถที่ใช้',
+    info: 'ข้อมูล (รายละเอียดรถ,ไฟแนนซ์,ยอดปิด)'
   }
 
   const getDiff = (original: any, requested: any) => {
@@ -138,6 +139,12 @@ export default function ManagerPortal() {
               {task.location || <span className="text-slate-400 italic">ไม่ได้ระบุสถานที่</span>}
             </span>
           </div>
+
+          {task.info && (
+            <div className={`mb-1 text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 mt-1 font-semibold ${diffKeys.includes('info') ? 'bg-yellow-100 border-yellow-300 text-yellow-950 font-bold' : ''}`}>
+              <span>📝 ข้อมูล: {task.info}</span>
+            </div>
+          )}
 
           <div className={`text-blue-800 bg-blue-50/50 border border-blue-100 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 mt-1 font-semibold ${diffKeys.includes('date') || diffKeys.includes('time') || diffKeys.includes('region') ? 'bg-yellow-100 border-yellow-300 text-yellow-950 font-bold' : ''}`}>
             <Calendar size={12} /> 
@@ -457,7 +464,8 @@ export default function ManagerPortal() {
       admin: task.admin,
       driverName: task.driverName || '',
       startTime: task.startTime || '',
-      car: task.car || ''
+      car: task.car || '',
+      info: task.info || ''
     })
     setIsTaskModalOpen(true)
   }
@@ -866,6 +874,12 @@ export default function ManagerPortal() {
                                     <div className="mb-1 flex items-start gap-1"><MapPin size={zoomStyle.iconSize} className="text-slate-400 shrink-0 mt-0.5" /> <span className="line-clamp-2" title={t.location}>{t.location}</span></div>
                                   )}
 
+                                  {t.info && (
+                                    <div className="mb-1 text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 mt-1 font-semibold">
+                                      <span>📝 ข้อมูล: {t.info}</span>
+                                    </div>
+                                  )}
+
                                   <div className="text-blue-800 bg-blue-50/50 border border-blue-100 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 mt-1 font-semibold">
                                     <Calendar size={zoomStyle.iconSize} /> นัดหมาย: {new Date(t.date).toLocaleDateString('th-TH')} {t.time}
                                   </div>
@@ -1058,6 +1072,11 @@ export default function ManagerPortal() {
                     <label className="block text-sm font-medium text-slate-700 mb-1">ระบุเวลา</label>
                     <input type="text" value={taskFormData.time} onChange={e => setTaskFormData({...taskFormData, time: e.target.value})} className="w-full border rounded-lg p-2 outline-none" placeholder="เช่น 08:00-12:00" />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">ข้อมูล (รายละเอียดรถ, ไฟแนนซ์, ยอดปิด)</label>
+                  <input type="text" value={taskFormData.info || ''} onChange={e => setTaskFormData({...taskFormData, info: e.target.value})} className="w-full border rounded-lg p-2 outline-none" placeholder="ระบุรายละเอียดรถ, ไฟแนนซ์, ยอดปิด" />
                 </div>
 
                 <div>

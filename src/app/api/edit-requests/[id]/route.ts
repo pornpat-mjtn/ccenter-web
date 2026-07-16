@@ -57,7 +57,8 @@ export async function POST(
           liftPlate: requested.liftPlate ?? taskExists.liftPlate,
           driverName: requested.driverName ?? taskExists.driverName,
           startTime: requested.startTime ?? taskExists.startTime,
-          car: requested.car ?? taskExists.car
+          car: requested.car ?? taskExists.car,
+          info: requested.info ?? taskExists.info
         }
       })
 

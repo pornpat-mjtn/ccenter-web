@@ -73,7 +73,8 @@ export async function POST(request: Request) {
           liftPlate: data.liftPlate,
           driverName: data.driverName,
           startTime: data.startTime,
-          car: data.car
+          car: data.car,
+          info: data.info
         }
       })
       return NextResponse.json({ success: true, task: updated })
@@ -93,6 +94,7 @@ export async function POST(request: Request) {
           driverName: data.driverName,
           startTime: data.startTime,
           car: data.car,
+          info: data.info,
           assignee: 'รอแพลน',
           order: 0
         }

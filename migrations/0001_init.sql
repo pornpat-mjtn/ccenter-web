@@ -13,7 +13,11 @@ CREATE TABLE "Task" (
     "assignee" TEXT DEFAULT 'รอแพลน',
     "order" INTEGER NOT NULL DEFAULT 0,
     "lift" BOOLEAN NOT NULL DEFAULT false,
-    "liftPlate" TEXT
+    "liftPlate" TEXT,
+    "driverName" TEXT,
+    "startTime" TEXT,
+    "car" TEXT,
+    "info" TEXT
 );
 
 -- CreateTable

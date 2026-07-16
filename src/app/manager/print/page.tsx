@@ -241,6 +241,9 @@ function PrintComponent() {
                           {/* Time (red text with clock icon) */}
                           {t.time && <span className="text-red-600 ml-1">⏰ {t.time}</span>}
 
+                          {/* Info field */}
+                          {t.info && <span className="text-slate-700 bg-slate-100 border border-slate-200 px-1 rounded ml-1 text-xs">📝 ข้อมูล: {t.info}</span>}
+
                           {/* Admin */}
                           {t.admin && <span className="text-gray-400 ml-1">Adm: {t.admin}</span>}
 
