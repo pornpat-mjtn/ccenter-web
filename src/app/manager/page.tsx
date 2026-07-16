@@ -1059,12 +1059,12 @@ export default function ManagerPortal() {
       {/* 3. Task Edit Modal */}
       {isTaskModalOpen && editingTask && (
         <div className="fixed inset-0 bg-slate-800/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50 shrink-0">
               <h3 className="font-bold text-slate-800">แก้ไขข้อมูลงาน</h3>
               <button onClick={() => setIsTaskModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               <form onSubmit={handleSaveTask} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
