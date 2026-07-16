@@ -169,8 +169,8 @@ export default function PlanHistory() {
             <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-100 mr-2">
               <ArrowLeft size={20} />
             </button>
-            <img src="/logo-refin.png" alt="REFIN" className="w-8 h-8 object-contain" /> 
-            REFIN <span className="text-sm font-normal text-blue-500 ml-1">Plan History</span>
+            <img src="/logo-ccenter.png" alt="C Center" className="w-8 h-8 object-contain" /> 
+            C Center <span className="text-sm font-normal text-sky-500 ml-1">Plan History</span>
           </div>
           <div className="flex gap-3 items-center shrink-0">
             <div className="flex items-center bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 gap-2 shrink-0">
