@@ -876,7 +876,9 @@ export default function ManagerPortal() {
                     ghostClass="opacity-50"
                     delay={200}
                     delayOnTouchOnly={true}
-                    fallbackTolerance={3}
+                    fallbackTolerance={5}
+                    forceFallback={true}
+                    fallbackOnBody={true}
                     data-droppable-id={colId}
                     onStart={() => setIsDragging(true)}
                     onEnd={(evt) => {
