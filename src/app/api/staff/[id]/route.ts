@@ -20,12 +20,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
     })
     
-    // Update tasks assignee if name changed
+    // Update tasks assignee if name changed using raw SQL for D1 compatibility
     if (data.name && oldStaff.name !== data.name) {
-      await prisma.task.updateMany({
-        where: { assignee: oldStaff.name },
-        data: { assignee: data.name }
-      })
+      await prisma.$executeRaw`UPDATE Task SET assignee = ${data.name} WHERE assignee = ${oldStaff.name}`
     }
     
     return NextResponse.json({ success: true, staff: updated })
@@ -38,6 +35,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    
+    const staff = await prisma.staff.findUnique({ where: { id } })
+    if (!staff) return NextResponse.json({ error: 'Staff not found' }, { status: 404 })
+
+    // Reset tasks assigned to this staff back to 'รอแพลน' to prevent orphaned tasks
+    await prisma.$executeRaw`UPDATE Task SET assignee = 'รอแพลน' WHERE assignee = ${staff.name}`
+
+    // Delete the staff
     await prisma.staff.delete({
       where: { id }
     })
