@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     const toDeleteIds = allTasks.filter(t => {
       const taskDateStr = new Date(t.date).toISOString().split('T')[0]
       if (taskDateStr < thaiDateStr) return true // Past dates
-      if (taskDateStr === thaiDateStr && thaiHour >= 10) return true // Today after 10 AM
+      // if (taskDateStr === thaiDateStr && thaiHour >= 10) return true // Disabled: Prevents today's tasks from disappearing after 10 AM
       return false
     }).map(t => t.id)
 
