@@ -5,21 +5,39 @@ export const runtime = 'edge'
 
 export async function PUT(request: Request) {
   try {
-    const data = await request.json() as any
-    // data is an array of { id, assignee, order }
+    const data = await request.json() as { id: string, assignee: string, newIndex: number }
+    const { id, assignee, newIndex } = data
     
-    // Perform bulk updates in a transaction
-    const updates = data.map((update: any) => 
-      prisma.task.update({
-        where: { id: update.id },
-        data: {
-          assignee: update.assignee,
-          order: update.order
-        }
-      })
+    if (!id || typeof newIndex !== 'number') {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // 1. Get all tasks in the target assignee's column, sorted by current order
+    const tasksInColumn = await prisma.task.findMany({
+      where: { assignee },
+      orderBy: { order: 'asc' }
+    })
+
+    // 2. Remove the task being moved from this list (if it's already in the same column)
+    const otherTasks = tasksInColumn.filter(t => t.id !== id)
+
+    // 3. Insert the task being moved at the exact newIndex requested by the frontend
+    // If newIndex is larger than the array, it will be placed at the end.
+    const insertIndex = Math.min(newIndex, otherTasks.length)
+    otherTasks.splice(insertIndex, 0, { id, assignee } as any)
+
+    // 4. Update the task itself with the new assignee (if it changed) and update the order of all affected tasks
+    await prisma.$transaction(
+      otherTasks.map((t, idx) => 
+        prisma.task.update({
+          where: { id: t.id },
+          data: {
+            assignee: t.id === id ? assignee : undefined,
+            order: idx * 1000 // Give a spaced out order to allow simple insertions later if needed
+          }
+        })
+      )
     )
-    
-    await prisma.$transaction(updates)
     
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -350,6 +350,33 @@ export default function ManagerPortal() {
       }
     }
   }
+
+  const handleEditStaffName = async (staff: Staff) => {
+    const { value: newName } = await Swal.fire({
+      title: 'เปลี่ยนชื่อพนักงาน',
+      input: 'text',
+      inputValue: staff.name,
+      showCancelButton: true,
+      confirmButtonText: 'บันทึก',
+      cancelButtonText: 'ยกเลิก',
+      inputValidator: (value) => {
+        if (!value) return 'กรุณาระบุชื่อ!'
+      }
+    })
+    if (newName && newName !== staff.name) {
+      try {
+        await fetch(`/api/staff/${staff.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        })
+        loadData()
+        Swal.fire('สำเร็จ', 'เปลี่ยนชื่อพนักงานและอัปเดตการ์ดงานแล้ว', 'success')
+      } catch (e) {
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเปลี่ยนชื่อได้', 'error')
+      }
+    }
+  }
   const handleChangePIN = async () => {
     const { value: formValues } = await Swal.fire({
       title: 'เปลี่ยนรหัส PIN (Manager)',
@@ -576,7 +603,11 @@ export default function ManagerPortal() {
 
     const movedTask = tasks.find(t => t.id === draggableId)
     if (!movedTask) return
+    
+    // Save original state for rollback
+    const originalTasks = [...tasks]
 
+    // 1. Optimistic UI Update
     const otherTasks = tasks.filter(t => 
       t.id !== draggableId && 
       t.assignee !== source.droppableId && 
@@ -597,33 +628,39 @@ export default function ManagerPortal() {
       const colTasks = [...sourceTasks]
       colTasks.splice(destination.index, 0, updatedMovedTask)
       colTasks.forEach((t, i) => { t.order = i })
-      
-      const merged = [...otherTasks, ...colTasks]
-      setTasks(merged)
-      
-      const updates = colTasks.map(t => ({ id: t.id, assignee: t.assignee, order: t.order }))
-      await fetch('/api/tasks/kanban', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      })
+      setTasks([...otherTasks, ...colTasks])
     } else {
       sourceTasks.forEach((t, i) => { t.order = i })
       destTasks.splice(destination.index, 0, updatedMovedTask)
       destTasks.forEach((t, i) => { t.order = i })
+      setTasks([...otherTasks, ...sourceTasks, ...destTasks])
+    }
 
-      const merged = [...otherTasks, ...sourceTasks, ...destTasks]
-      setTasks(merged)
-
-      const updates = [
-        ...sourceTasks.map(t => ({ id: t.id, assignee: t.assignee, order: t.order })),
-        ...destTasks.map(t => ({ id: t.id, assignee: t.assignee, order: t.order }))
-      ]
-      await fetch('/api/tasks/kanban', {
+    // 2. Call API
+    try {
+      const payload = {
+        id: draggableId,
+        assignee: destination.droppableId,
+        newIndex: destination.index
+      }
+      
+      const res = await fetch('/api/tasks/kanban', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
+        body: JSON.stringify(payload)
       })
+      
+      if (!res.ok) throw new Error('Failed to update task order')
+    } catch (error) {
+      console.error('Drag error:', error)
+      Swal.fire({
+        title: 'ข้อผิดพลาด',
+        text: 'ไม่สามารถย้ายการ์ดได้ (อาจมีผู้ใช้คนอื่นเปลี่ยนแปลงข้อมูล) ระบบจะรีเฟรชหน้าจอใหม่',
+        icon: 'error'
+      })
+      // Rollback
+      setTasks(originalTasks)
+      loadData()
     }
   }
 
@@ -1009,8 +1046,9 @@ export default function ManagerPortal() {
                         <tr key={s.id} className="hover:bg-slate-50/50">
                           <td className="px-4 py-2.5"><span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">{s.region}</span></td>
                           <td className="px-4 py-2.5 font-medium">{s.name}</td>
-                          <td className="px-4 py-2.5 text-center">
-                            <button type="button" onClick={() => handleDeleteStaff(s.id)} className="text-red-500 hover:text-red-700 p-1"><Trash size={15} /></button>
+                          <td className="px-4 py-2.5 text-center flex justify-center gap-2">
+                            <button type="button" onClick={() => handleEditStaffName(s)} className="text-blue-500 hover:text-blue-700 p-1" title="แก้ไขชื่อพนักงาน"><Edit size={15} /></button>
+                            <button type="button" onClick={() => handleDeleteStaff(s.id)} className="text-red-500 hover:text-red-700 p-1" title="ลบพนักงาน"><Trash size={15} /></button>
                           </td>
                         </tr>
                       ))
