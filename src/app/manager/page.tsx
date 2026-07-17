@@ -11,6 +11,10 @@ import Swal from 'sweetalert2'
 const REGIONS = ['ภาคกลาง', 'ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
 
 export default function ManagerPortal() {
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [staffs, setStaffs] = useState<Staff[]>([])
@@ -781,6 +785,17 @@ export default function ManagerPortal() {
 
   const columns = ['รอแพลน', ...staffs.map(s => s.name)]
   const filteredColumns = staffFilter === 'All' ? columns : ['รอแพลน', staffFilter]
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fc]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-semibold text-slate-600">กำลังโหลดระบบ... (Loading...)</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fc] text-gray-800 font-sans">

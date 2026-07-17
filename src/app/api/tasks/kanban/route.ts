@@ -33,22 +33,47 @@ export async function PUT(request: Request) {
     // 3. Remove the task being moved from this list (if it's already in the same column and same date)
     const otherTasks = tasksInColumn.filter(t => t.id !== id)
 
-    // 4. Insert the task being moved at the exact newIndex requested by the frontend
-    const insertIndex = Math.min(newIndex, otherTasks.length)
-    otherTasks.splice(insertIndex, 0, { id, assignee } as any)
+    // 4. Calculate optimized intermediate order
+    let newOrder = 0
+    if (otherTasks.length === 0) {
+      newOrder = 1000
+    } else if (newIndex <= 0) {
+      newOrder = otherTasks[0].order - 1000
+    } else if (newIndex >= otherTasks.length) {
+      newOrder = otherTasks[otherTasks.length - 1].order + 1000
+    } else {
+      const prevOrder = otherTasks[newIndex - 1].order
+      const nextOrder = otherTasks[newIndex].order
+      if (nextOrder - prevOrder > 1) {
+        newOrder = Math.round((prevOrder + nextOrder) / 2)
+      } else {
+        // Fallback: re-index everything in the column only when no integer gap exists
+        const updatedTasks = [...otherTasks]
+        const insertIndex = Math.min(newIndex, otherTasks.length)
+        updatedTasks.splice(insertIndex, 0, { id, assignee } as any)
+        await prisma.$transaction(
+          updatedTasks.map((t, idx) => 
+            prisma.task.update({
+              where: { id: t.id },
+              data: {
+                assignee: t.id === id ? assignee : undefined,
+                order: (idx + 1) * 1000
+              }
+            })
+          )
+        )
+        return NextResponse.json({ success: true })
+      }
+    }
 
-    // 5. Update the task itself with the new assignee (if it changed) and update the order of all affected tasks
-    await prisma.$transaction(
-      otherTasks.map((t, idx) => 
-        prisma.task.update({
-          where: { id: t.id },
-          data: {
-            assignee: t.id === id ? assignee : undefined,
-            order: idx * 1000
-          }
-        })
-      )
-    )
+    // 5. Update only the moved task
+    await prisma.task.update({
+      where: { id },
+      data: {
+        assignee,
+        order: newOrder
+      }
+    })
     
     return NextResponse.json({ success: true })
   } catch (error: any) {
