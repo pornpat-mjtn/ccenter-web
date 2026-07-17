@@ -29,9 +29,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
     
     return NextResponse.json({ success: true, staff: updated })
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
   }
 }
 
@@ -42,8 +42,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       where: { id }
     })
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
   }
 }
