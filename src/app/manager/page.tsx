@@ -323,7 +323,9 @@ export default function ManagerPortal() {
       const data = await res.json() as any
       if (data.success) {
         setNewStaffName('')
-        loadData()
+        // Optimistic UI Update
+        setStaffs(prev => [...prev, data.staff])
+        setTimeout(loadData, 500)
         Swal.fire({ icon: 'success', title: 'เพิ่มพนักงานสำเร็จ', timer: 1500, showConfirmButton: false })
       } else {
         Swal.fire('Error', 'ไม่สามารถเพิ่มพนักงานได้', 'error')
@@ -357,7 +359,9 @@ export default function ManagerPortal() {
           const errData = await res.json() as any
           throw new Error(errData.error || 'ลบข้อมูลล้มเหลว')
         }
-        loadData()
+        // Optimistic UI Update
+        setStaffs(prev => prev.filter(s => s.id !== id))
+        setTimeout(loadData, 500)
         Swal.fire('ลบแล้ว!', 'ลบพนักงานเรียบร้อย', 'success')
       } catch (e: any) {
         Swal.fire('Error', e.message || 'ไม่สามารถลบข้อมูลได้', 'error')
@@ -394,7 +398,10 @@ export default function ManagerPortal() {
           const errData = await res.json() as any
           throw new Error(errData.error || 'เปลี่ยนชื่อล้มเหลว')
         }
-        loadData()
+        // Optimistic UI Update
+        setStaffs(prev => prev.map(s => s.id === staff.id ? { ...s, name: newName } : s))
+        setTasks(prev => prev.map(t => t.assignee === staff.name ? { ...t, assignee: newName } : t))
+        setTimeout(loadData, 500)
         Swal.fire('สำเร็จ', 'เปลี่ยนชื่อพนักงานและอัปเดตการ์ดงานแล้ว', 'success')
       } catch (e: any) {
         Swal.fire('ข้อผิดพลาด', e.message || 'ไม่สามารถเปลี่ยนชื่อได้', 'error')
@@ -466,7 +473,9 @@ export default function ManagerPortal() {
       const data = await res.json() as any
       if (data.success) {
         setIsConfigModalOpen(false)
-        loadData()
+        // Optimistic UI Update
+        setStaffs(prev => prev.map(s => s.id === selectedStaff.id ? { ...s, startTime: configStartTime, carPlate: configCarPlate } : s))
+        setTimeout(loadData, 500)
         Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false })
       }
     } catch (e) {
@@ -491,7 +500,13 @@ export default function ManagerPortal() {
       const data = await res.json() as any
       if (data.success) {
         setIsRegionConfigModalOpen(false)
-        loadData()
+        // Optimistic UI Update
+        setRegionConfig({
+          staffName: regionConfigForm.staffName,
+          startTime: regionConfigForm.startTime,
+          carPlate: regionConfigForm.carPlate
+        })
+        setTimeout(loadData, 500)
         Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false })
       }
     } catch (e) {
@@ -534,7 +549,9 @@ export default function ManagerPortal() {
       const data = await res.json() as any
       if (data.success) {
         setIsTaskModalOpen(false)
-        loadData()
+        // Optimistic UI Update
+        setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...taskFormData } : t))
+        setTimeout(loadData, 500)
         Swal.fire({ icon: 'success', title: 'แก้ไขข้อมูลสำเร็จ', timer: 1500, showConfirmButton: false })
       }
     } catch (e) {
@@ -557,7 +574,9 @@ export default function ManagerPortal() {
       try {
         const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' })
         if (res.ok) {
-          loadData()
+          // Optimistic UI Update
+          setTasks(prev => prev.filter(t => t.id !== id))
+          setTimeout(loadData, 500)
           Swal.fire('ลบแล้ว!', 'ลบงานเรียบร้อย', 'success')
         } else {
           let errorMsg = 'ไม่สามารถลบข้อมูลได้'
