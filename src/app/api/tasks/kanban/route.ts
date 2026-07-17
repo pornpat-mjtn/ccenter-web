@@ -21,11 +21,12 @@ export async function PUT(request: Request) {
     }
     const targetDate = task.date
 
-    // 2. Get all tasks in the target assignee's column with the same date, sorted by current order
+    // 2. Get all tasks in the target assignee's column with the same date and region, sorted by current order
     const tasksInColumn = await prisma.task.findMany({
       where: { 
         assignee,
-        date: targetDate
+        date: targetDate,
+        region: task.region
       },
       orderBy: { order: 'asc' }
     })
