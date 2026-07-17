@@ -245,7 +245,7 @@ export default function ManagerPortal() {
     try {
       // 1. Fetch tasks
       try {
-        const res = await fetch(`/api/tasks?region=${region}`)
+        const res = await fetch(`/api/tasks?region=${region}&t=${Date.now()}`)
         if (res.ok) {
           const data = await res.json()
           setTasks(Array.isArray(data) ? data : [])
@@ -258,7 +258,7 @@ export default function ManagerPortal() {
 
       // 2. Fetch staff
       try {
-        const res = await fetch(`/api/staff?region=${region}`)
+        const res = await fetch(`/api/staff?region=${region}&t=${Date.now()}`)
         if (res.ok) {
           const data = await res.json()
           setStaffs(Array.isArray(data) ? data : [])
@@ -271,7 +271,7 @@ export default function ManagerPortal() {
 
       // 3. Fetch region config
       try {
-        const res = await fetch(`/api/region-config?region=${region}`)
+        const res = await fetch(`/api/region-config?region=${region}&t=${Date.now()}`)
         if (res.ok) {
           const data = await res.json() as any
           setRegionConfig({
@@ -288,7 +288,7 @@ export default function ManagerPortal() {
 
       // 4. Fetch edit requests
       try {
-        const res = await fetch('/api/edit-requests')
+        const res = await fetch(`/api/edit-requests?t=${Date.now()}`)
         if (res.ok) {
           const data = await res.json()
           if (Array.isArray(data)) {
