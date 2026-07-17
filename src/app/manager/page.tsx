@@ -330,6 +330,12 @@ export default function ManagerPortal() {
   }
 
   const handleDeleteStaff = async (id: string) => {
+    // Prevent modifying mock staffs
+    if (id.startsWith('day-')) {
+      Swal.fire('ข้อผิดพลาด', 'ไม่สามารถลบวันของสัปดาห์ได้', 'error')
+      return
+    }
+
     const result = await Swal.fire({
       title: 'ลบพนักงานคนนี้?',
       text: "การดำเนินการนี้ไม่สามารถย้อนกลับได้!",
@@ -342,16 +348,26 @@ export default function ManagerPortal() {
 
     if (result.isConfirmed) {
       try {
-        await fetch(`/api/staff/${id}`, { method: 'DELETE' })
+        const res = await fetch(`/api/staff/${id}`, { method: 'DELETE' })
+        if (!res.ok) {
+          const errData = await res.json() as any
+          throw new Error(errData.error || 'ลบข้อมูลล้มเหลว')
+        }
         loadData()
         Swal.fire('ลบแล้ว!', 'ลบพนักงานเรียบร้อย', 'success')
-      } catch (e) {
-        Swal.fire('Error', 'ไม่สามารถลบข้อมูลได้', 'error')
+      } catch (e: any) {
+        Swal.fire('Error', e.message || 'ไม่สามารถลบข้อมูลได้', 'error')
       }
     }
   }
 
   const handleEditStaffName = async (staff: Staff) => {
+    // Prevent modifying mock staffs
+    if (staff.id.startsWith('day-')) {
+      Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเปลี่ยนชื่อวันของสัปดาห์ได้', 'error')
+      return
+    }
+
     const { value: newName } = await Swal.fire({
       title: 'เปลี่ยนชื่อพนักงาน',
       input: 'text',
@@ -365,15 +381,19 @@ export default function ManagerPortal() {
     })
     if (newName && newName !== staff.name) {
       try {
-        await fetch(`/api/staff/${staff.id}`, {
+        const res = await fetch(`/api/staff/${staff.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: newName })
         })
+        if (!res.ok) {
+          const errData = await res.json() as any
+          throw new Error(errData.error || 'เปลี่ยนชื่อล้มเหลว')
+        }
         loadData()
         Swal.fire('สำเร็จ', 'เปลี่ยนชื่อพนักงานและอัปเดตการ์ดงานแล้ว', 'success')
-      } catch (e) {
-        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเปลี่ยนชื่อได้', 'error')
+      } catch (e: any) {
+        Swal.fire('ข้อผิดพลาด', e.message || 'ไม่สามารถเปลี่ยนชื่อได้', 'error')
       }
     }
   }
@@ -607,19 +627,20 @@ export default function ManagerPortal() {
     // Save original state for rollback
     const originalTasks = [...tasks]
 
-    // 1. Optimistic UI Update
+    // 1. Optimistic UI Update (Grouped by the same date to match dateFilter)
+    const taskDate = movedTask.date
     const otherTasks = tasks.filter(t => 
       t.id !== draggableId && 
-      t.assignee !== source.droppableId && 
-      t.assignee !== destination.droppableId
+      !(t.date === taskDate && (t.assignee === source.droppableId || (source.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน')))) &&
+      !(t.date === taskDate && (t.assignee === destination.droppableId || (destination.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))))
     )
     
     let sourceTasks = tasks
-      .filter(t => t.id !== draggableId && (t.assignee === source.droppableId || (source.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))))
+      .filter(t => t.id !== draggableId && t.date === taskDate && (t.assignee === source.droppableId || (source.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))))
       .sort((a, b) => (a.order || 0) - (b.order || 0))
     
     let destTasks = tasks
-      .filter(t => t.id !== draggableId && (t.assignee === destination.droppableId || (destination.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))))
+      .filter(t => t.id !== draggableId && t.date === taskDate && (t.assignee === destination.droppableId || (destination.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))))
       .sort((a, b) => (a.order || 0) - (b.order || 0))
 
     const updatedMovedTask = { ...movedTask, assignee: destination.droppableId }

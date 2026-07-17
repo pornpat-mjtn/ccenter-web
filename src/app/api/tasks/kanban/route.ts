@@ -12,28 +12,39 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // 1. Get all tasks in the target assignee's column, sorted by current order
+    // 1. Fetch the dragged task to obtain its date
+    const task = await prisma.task.findUnique({
+      where: { id }
+    })
+    if (!task) {
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 })
+    }
+    const targetDate = task.date
+
+    // 2. Get all tasks in the target assignee's column with the same date, sorted by current order
     const tasksInColumn = await prisma.task.findMany({
-      where: { assignee },
+      where: { 
+        assignee,
+        date: targetDate
+      },
       orderBy: { order: 'asc' }
     })
 
-    // 2. Remove the task being moved from this list (if it's already in the same column)
+    // 3. Remove the task being moved from this list (if it's already in the same column and same date)
     const otherTasks = tasksInColumn.filter(t => t.id !== id)
 
-    // 3. Insert the task being moved at the exact newIndex requested by the frontend
-    // If newIndex is larger than the array, it will be placed at the end.
+    // 4. Insert the task being moved at the exact newIndex requested by the frontend
     const insertIndex = Math.min(newIndex, otherTasks.length)
     otherTasks.splice(insertIndex, 0, { id, assignee } as any)
 
-    // 4. Update the task itself with the new assignee (if it changed) and update the order of all affected tasks
+    // 5. Update the task itself with the new assignee (if it changed) and update the order of all affected tasks
     await prisma.$transaction(
       otherTasks.map((t, idx) => 
         prisma.task.update({
           where: { id: t.id },
           data: {
             assignee: t.id === id ? assignee : undefined,
-            order: idx * 1000 // Give a spaced out order to allow simple insertions later if needed
+            order: idx * 1000
           }
         })
       )
