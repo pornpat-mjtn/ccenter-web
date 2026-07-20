@@ -66,7 +66,7 @@ export default function ManagerPortal() {
   const [regionConfigForm, setRegionConfigForm] = useState({ staffName: '', startTime: '', carPlate: '' })
 
 
-  const [isDragging, setIsDragging] = useState(false)
+
   const [editRequests, setEditRequests] = useState<any[]>([])
   const [isEditRequestsModalOpen, setIsEditRequestsModalOpen] = useState(false)
 
@@ -489,6 +489,7 @@ export default function ManagerPortal() {
         setIsConfigModalOpen(false)
         // Optimistic UI Update
         setStaffs(prev => prev.map(s => s.id === selectedStaff.id ? { ...s, startTime: configStartTime, carPlate: configCarPlate } : s))
+        router.refresh()
         setTimeout(loadData, 500)
         Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false })
       }
@@ -565,6 +566,7 @@ export default function ManagerPortal() {
         setIsTaskModalOpen(false)
         // Optimistic UI Update
         setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...taskFormData } : t))
+        router.refresh()
         setTimeout(loadData, 500)
         Swal.fire({ icon: 'success', title: 'แก้ไขข้อมูลสำเร็จ', timer: 1500, showConfirmButton: false })
       }
@@ -590,6 +592,7 @@ export default function ManagerPortal() {
         if (res.ok) {
           // Optimistic UI Update
           setTasks(prev => prev.filter(t => t.id !== id))
+          router.refresh()
           setTimeout(loadData, 500)
           Swal.fire('ลบแล้ว!', 'ลบงานเรียบร้อย', 'success')
         } else {
@@ -926,9 +929,7 @@ export default function ManagerPortal() {
 
       {/* Kanban Board */}
       <DragDropContext 
-        onDragStart={() => setIsDragging(true)}
         onDragEnd={(result) => {
-          setIsDragging(false)
           handleDragEnd(result)
         }}
       >
@@ -1084,6 +1085,9 @@ export default function ManagerPortal() {
               <button onClick={() => setIsStaffModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
             </div>
             <div className="p-6">
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4 text-xs text-blue-700">
+                💡 <b>คำแนะนำ:</b> คุณสามารถเพิ่ม เปลี่ยนชื่อ หรือลบคอลัมน์พนักงานได้อิสระ ไม่จำกัดแค่ วันจันทร์-อาทิตย์ (เช่น "วันจันทร์ 1", "วันจันทร์ 2") โดยคอลัมน์จะแสดงตามชื่อที่คุณตั้งไว้
+              </div>
               <form onSubmit={handleAddStaff} className="flex gap-2 mb-4">
                 <select 
                   value={newStaffRegion} 

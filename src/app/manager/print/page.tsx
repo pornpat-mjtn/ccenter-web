@@ -47,6 +47,7 @@ function PrintComponent() {
         const endFormatted = new Date(endDateStr).toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
 
         const filteredTasks = allTasks.filter(t => {
+          if (t.region !== region) return false
           if (!t.assignee || !selectedStaffs.includes(t.assignee)) return false
           const taskDateFormatted = new Date(t.date).toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
           return taskDateFormatted >= startFormatted && taskDateFormatted <= endFormatted
