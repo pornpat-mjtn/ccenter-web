@@ -32,7 +32,7 @@ export async function PUT(request: Request) {
     })
 
     // 3. Remove the task being moved from this list (if it's already in the same column and same date)
-    const otherTasks = tasksInColumn.filter(t => t.id !== id)
+    const otherTasks = tasksInColumn.filter((t: any) => t.id !== id)
 
     // 4. Calculate optimized intermediate order
     let newOrder = 0

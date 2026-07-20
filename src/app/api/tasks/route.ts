@@ -20,12 +20,12 @@ export async function GET(request: Request) {
       where: { assignee: { not: 'รอแพลน' } }
     })
 
-    const toDeleteIds = allTasks.filter(t => {
+    const toDeleteIds = allTasks.filter((t: any) => {
       const taskDateStr = new Date(t.date).toISOString().split('T')[0]
       if (taskDateStr < thaiDateStr) return true // Past dates
       // if (taskDateStr === thaiDateStr && thaiHour >= 10) return true // Disabled: Prevents today's tasks from disappearing after 10 AM
       return false
-    }).map(t => t.id)
+    }).map((t: any) => t.id)
 
     if (toDeleteIds.length > 0) {
       await prisma.task.deleteMany({
