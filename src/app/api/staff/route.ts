@@ -9,18 +9,6 @@ export async function GET(request: Request) {
   const region = searchParams.get('region')
 
   try {
-    if (region && region !== 'ภาคกลาง') {
-      const days = ['วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์', 'วันอาทิตย์']
-      const mockStaffs = days.map((day, idx) => ({
-        id: `day-${idx}`,
-        name: day,
-        region: region,
-        startTime: '',
-        carPlate: ''
-      }))
-      return NextResponse.json(mockStaffs)
-    }
-
     let whereClause: any = {}
     if (region) {
       whereClause.region = region

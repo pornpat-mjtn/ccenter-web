@@ -43,15 +43,13 @@ function PrintComponent() {
           setRegionConfig(rConfig)
         }
 
-        const start = new Date(startDateStr)
-        start.setHours(0,0,0,0)
-        const end = new Date(endDateStr)
-        end.setHours(23,59,59,999)
+        const startFormatted = new Date(startDateStr).toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
+        const endFormatted = new Date(endDateStr).toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
 
         const filteredTasks = allTasks.filter(t => {
           if (!t.assignee || !selectedStaffs.includes(t.assignee)) return false
-          const taskDate = new Date(t.date)
-          return taskDate >= start && taskDate <= end
+          const taskDateFormatted = new Date(t.date).toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' })
+          return taskDateFormatted >= startFormatted && taskDateFormatted <= endFormatted
         }).sort((a, b) => {
           const dateA = new Date(a.date).getTime()
           const dateB = new Date(b.date).getTime()

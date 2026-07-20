@@ -23,7 +23,14 @@ export async function POST(request: Request) {
     }
 
     if (setting.value === pin) {
-      return NextResponse.json({ success: true })
+      const response = NextResponse.json({ success: true })
+      response.cookies.set('manager_token', 'authenticated', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24, // 24 hours
+        path: '/'
+      })
+      return response
     }
 
     return NextResponse.json({ success: false }, { status: 401 })

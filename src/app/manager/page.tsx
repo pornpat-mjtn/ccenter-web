@@ -25,6 +25,7 @@ export default function ManagerPortal() {
 
   // Modals state
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false)
+  const [modalStaffs, setModalStaffs] = useState<Staff[]>([])
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false)
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
@@ -41,8 +42,7 @@ export default function ManagerPortal() {
   const getTomorrowDate = () => {
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
-    const offset = tomorrow.getTimezoneOffset() * 60000
-    const localISOTime = (new Date(tomorrow.getTime() - offset)).toISOString().slice(0, 10)
+    const localISOTime = tomorrow.toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' }).split(' ')[0]
     return localISOTime
   }
 
@@ -309,6 +309,15 @@ export default function ManagerPortal() {
     }
   }
 
+  useEffect(() => {
+    if (isStaffModalOpen) {
+      fetch(`/api/staff?region=${newStaffRegion}&t=${Date.now()}`)
+        .then(res => res.json())
+        .then(data => setModalStaffs(Array.isArray(data) ? data : []))
+        .catch(err => console.error(err))
+    }
+  }, [isStaffModalOpen, newStaffRegion])
+
   // Manage Staff functions
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -324,7 +333,10 @@ export default function ManagerPortal() {
       if (data.success) {
         setNewStaffName('')
         // Optimistic UI Update
-        setStaffs(prev => [...prev, data.staff])
+        if (newStaffRegion === region) {
+          setStaffs(prev => [...prev, data.staff])
+        }
+        setModalStaffs(prev => [...prev, data.staff])
         setTimeout(loadData, 500)
         Swal.fire({ icon: 'success', title: 'เพิ่มพนักงานสำเร็จ', timer: 1500, showConfirmButton: false })
       } else {
@@ -361,6 +373,7 @@ export default function ManagerPortal() {
         }
         // Optimistic UI Update
         setStaffs(prev => prev.filter(s => s.id !== id))
+        setModalStaffs(prev => prev.filter(s => s.id !== id))
         setTimeout(loadData, 500)
         Swal.fire('ลบแล้ว!', 'ลบพนักงานเรียบร้อย', 'success')
       } catch (e: any) {
@@ -400,6 +413,7 @@ export default function ManagerPortal() {
         }
         // Optimistic UI Update
         setStaffs(prev => prev.map(s => s.id === staff.id ? { ...s, name: newName } : s))
+        setModalStaffs(prev => prev.map(s => s.id === staff.id ? { ...s, name: newName } : s))
         setTasks(prev => prev.map(t => t.assignee === staff.name ? { ...t, assignee: newName } : t))
         setTimeout(loadData, 500)
         Swal.fire('สำเร็จ', 'เปลี่ยนชื่อพนักงานและอัปเดตการ์ดงานแล้ว', 'success')
@@ -1094,10 +1108,10 @@ export default function ManagerPortal() {
                     </tr>
                   </thead>
                   <tbody className="divide-y text-slate-600">
-                    {staffs.length === 0 ? (
+                    {modalStaffs.length === 0 ? (
                       <tr><td colSpan={3} className="text-center py-6 text-slate-400">ยังไม่มีพนักงานประจำภาคนี้</td></tr>
                     ) : (
-                      staffs.map(s => (
+                      modalStaffs.map(s => (
                         <tr key={s.id} className="hover:bg-slate-50/50">
                           <td className="px-4 py-2.5"><span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">{s.region}</span></td>
                           <td className="px-4 py-2.5 font-medium">{s.name}</td>

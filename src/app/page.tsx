@@ -20,9 +20,7 @@ export default function StaffPortal() {
   const getTomorrowDate = () => {
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
-    // Adjust for timezone offset if necessary, but split('T')[0] on local time is safer:
-    const offset = tomorrow.getTimezoneOffset() * 60000
-    const localISOTime = (new Date(tomorrow.getTime() - offset)).toISOString().slice(0, 10)
+    const localISOTime = tomorrow.toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' }).split(' ')[0]
     return localISOTime
   }
 
