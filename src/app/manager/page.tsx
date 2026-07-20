@@ -772,13 +772,16 @@ export default function ManagerPortal() {
   }
 
   const handleSavePlan = async () => {
-    const activeDate = dateFilter || getTomorrowDate()
-    const tasksToSave = tasks.filter(t => t.date.startsWith(activeDate))
+    // 1. Get Today's Date in Thailand timezone for the snapshot key
+    const todayStr = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' }).split(' ')[0]
+    
+    // 2. Save all tasks currently visible on the board (respecting the dateFilter)
+    const tasksToSave = tasks.filter(t => dateFilter ? t.date.startsWith(dateFilter) : true)
     
     try {
       Swal.fire({
-        title: 'บันทึกแพลนงาน',
-        text: `คุณต้องการบันทึกประวัติแพลนงานของภูมิภาค ${region} ประจำวันที่ ${new Date(activeDate).toLocaleDateString('th-TH')} ใช่หรือไม่?`,
+        title: 'บันทึกแพลนงาน (ปัจจุบัน)',
+        text: `คุณต้องการบันทึกประวัติแพลนงานของภูมิภาค ${region} ที่จัดเตรียมไว้ ณ วันที่ ${new Date(todayStr).toLocaleDateString('th-TH')} ใช่หรือไม่?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'บันทึก',
@@ -787,14 +790,14 @@ export default function ManagerPortal() {
       }).then(async (result) => {
         if (result.isConfirmed) {
           Swal.showLoading()
-          const dbKey = `${region}_${activeDate}`
+          const dbKey = `${region}_${todayStr}`
           const payload = {
             date: dbKey,
             snapshotData: JSON.stringify({
               tasks: tasksToSave,
               staffs: staffs,
               region: region,
-              actualDate: activeDate
+              actualDate: todayStr // Used for legacy/tracking
             })
           }
           
@@ -805,7 +808,7 @@ export default function ManagerPortal() {
           })
 
           if (res.ok) {
-            Swal.fire('สำเร็จ', `บันทึกประวัติแพลนงานเรียบร้อยแล้ว`, 'success')
+            Swal.fire('สำเร็จ', `บันทึกประวัติ ณ วันที่ ${new Date(todayStr).toLocaleDateString('th-TH')} เรียบร้อยแล้ว`, 'success')
           } else {
             Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกประวัติแพลนงานได้', 'error')
           }
