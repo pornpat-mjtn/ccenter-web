@@ -772,13 +772,13 @@ export default function ManagerPortal() {
   }
 
   const handleSavePlan = async () => {
-    const targetDate = dateFilter || getTomorrowDate()
-    const tasksToSave = tasks.filter(t => t.date.startsWith(targetDate))
+    const activeDate = dateFilter || getTomorrowDate()
+    const tasksToSave = tasks.filter(t => t.date.startsWith(activeDate))
     
     try {
       Swal.fire({
         title: 'บันทึกแพลนงาน',
-        text: `คุณต้องการบันทึกประวัติแพลนงานของวันที่ ${new Date(targetDate).toLocaleDateString('th-TH')} ใช่หรือไม่?`,
+        text: `คุณต้องการบันทึกประวัติแพลนงานของภูมิภาค ${region} ประจำวันที่ ${new Date(activeDate).toLocaleDateString('th-TH')} ใช่หรือไม่?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'บันทึก',
@@ -787,12 +787,14 @@ export default function ManagerPortal() {
       }).then(async (result) => {
         if (result.isConfirmed) {
           Swal.showLoading()
+          const dbKey = `${region}_${activeDate}`
           const payload = {
-            date: targetDate,
+            date: dbKey,
             snapshotData: JSON.stringify({
               tasks: tasksToSave,
               staffs: staffs,
-              region: region
+              region: region,
+              actualDate: activeDate
             })
           }
           
@@ -803,7 +805,7 @@ export default function ManagerPortal() {
           })
 
           if (res.ok) {
-            Swal.fire('สำเร็จ', `บันทึกประวัติแพลนงานวันที่ ${new Date(targetDate).toLocaleDateString('th-TH')} เรียบร้อยแล้ว`, 'success')
+            Swal.fire('สำเร็จ', `บันทึกประวัติแพลนงานเรียบร้อยแล้ว`, 'success')
           } else {
             Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกประวัติแพลนงานได้', 'error')
           }

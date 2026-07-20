@@ -132,7 +132,8 @@ function PrintComponent() {
     return <div className="p-8 text-center text-red-500 font-bold">ไม่พบวันที่</div>
   }
 
-  const displayStart = new Date(dateStr).toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const actualDate = dateStr.includes('_') ? dateStr.split('_')[1] : dateStr
+  const displayStart = new Date(actualDate).toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   const headerTitle = `📜 ประวัติแพลนงาน ${displayStart} 📜`
 
   return (

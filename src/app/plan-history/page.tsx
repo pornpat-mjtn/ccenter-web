@@ -151,6 +151,13 @@ export default function PlanHistory() {
 
   const zoomStyle = getZoomClasses(zoom)
 
+  const filteredHistoryDates = historyDates.filter(h => {
+    if (h.date.includes('_')) {
+      return h.date.startsWith(`${region}_`)
+    }
+    return region === 'ภาคกลาง'
+  })
+
   let staffs = snapshot?.staffs || []
   let allTasks = snapshot?.tasks || []
   
@@ -181,11 +188,14 @@ export default function PlanHistory() {
                 className="text-sm font-bold bg-white border border-gray-200 rounded px-2 py-1 outline-none text-gray-700"
               >
                 <option value="">-- กรุณาเลือก --</option>
-                {historyDates.map(h => (
-                  <option key={h.date} value={h.date}>
-                    {new Date(h.date).toLocaleDateString('th-TH')}
-                  </option>
-                ))}
+                {filteredHistoryDates.map(h => {
+                  const displayDateStr = h.date.includes('_') ? h.date.split('_')[1] : h.date
+                  return (
+                    <option key={h.date} value={h.date}>
+                      {new Date(displayDateStr).toLocaleDateString('th-TH')}
+                    </option>
+                  )
+                })}
               </select>
             </div>
 
