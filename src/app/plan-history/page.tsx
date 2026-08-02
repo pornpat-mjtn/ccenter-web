@@ -59,8 +59,8 @@ export default function PlanHistory() {
     if (!selectedDate) return
 
     const result = await Swal.fire({
-      title: 'ลบประวัติแพลนงาน?',
-      text: `คุณต้องการลบประวัติของวันที่ ${selectedDate} ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
+      title: 'ลบประวัติการจ่ายงาน?',
+      text: `ลบบันทึกการจ่ายงานของ ${selectedDate.includes('_') ? selectedDate.replace('_', ' วันที่ ') : selectedDate} ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -177,11 +177,11 @@ export default function PlanHistory() {
               <ArrowLeft size={20} />
             </button>
             <img src="/logo-ccenter.png" alt="C Center" className="w-8 h-8 object-contain" /> 
-            C Center <span className="text-sm font-normal text-sky-500 ml-1">Plan History</span>
+            C Center <span className="text-sm font-normal text-sky-500 ml-1">ประวัติการจ่ายงาน</span>
           </div>
           <div className="flex gap-3 items-center shrink-0">
             <div className="flex items-center bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 gap-2 shrink-0">
-              <span className="text-sm text-blue-600 font-bold">เลือกวันที่ (Snapshot):</span>
+              <span className="text-sm text-blue-600 font-bold">วันที่จ่ายงาน:</span>
               <select 
                 value={selectedDate} 
                 onChange={(e) => setSelectedDate(e.target.value)}
@@ -251,7 +251,7 @@ export default function PlanHistory() {
       <main className="flex-1 overflow-x-auto p-6 bg-[#f8f9fc]">
         {!selectedDate ? (
           <div className="flex items-center justify-center h-64 text-gray-400 text-lg font-medium">
-            กรุณาเลือกวันที่ด้านบน เพื่อดูประวัติแพลนงาน
+            เลือกวันที่ด้านบน เพื่อดูว่าวันนั้นจ่ายงานออกไปแบบไหน
           </div>
         ) : !snapshot ? (
           <div className="flex items-center justify-center h-64 text-gray-400 text-lg font-medium">

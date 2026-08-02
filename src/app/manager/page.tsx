@@ -810,17 +810,49 @@ export default function ManagerPortal() {
     }
   }
 
+  /**
+   * Record what was dispatched today.
+   *
+   * The record is filed under the day the work went out — NOT the day the work
+   * happens. Those are usually one day apart, but not always: plan on Saturday
+   * and the work lands on Monday. The old wording said "แพลนงานของวันที่ X",
+   * which read as "the plan FOR day X", so a Saturday dispatch looked like it
+   * had been filed under an empty Sunday. Nothing about the date was actually
+   * wrong — the label was. Looking back now answers one question only:
+   * "on this day, what work did we send out?"
+   */
   const handleSavePlan = async () => {
-    // 1. Get Today's Date in Thailand timezone for the snapshot key
-    const todayStr = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' }).split(' ')[0]
-    
-    // 2. Save all tasks currently visible on the board (respecting the dateFilter)
-    const tasksToSave = tasks.filter(t => dateFilter ? t.date.startsWith(dateFilter) : true)
-    
+    // The day the work is being dispatched, in Thai time
+    const dispatchDate = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' }).split(' ')[0]
+    const dispatchDateTh = new Date(dispatchDate).toLocaleDateString('th-TH')
+
+    // Everything on the board goes in, regardless of which day each job falls
+    // on. This used to honour the date filter, so leaving a filter switched on
+    // silently recorded only part of what had gone out.
+    const tasksToSave = tasks
+
+    if (tasksToSave.length === 0) {
+      Swal.fire(
+        'ไม่มีงานให้บันทึก',
+        `กระดานของ${region}ยังว่างอยู่ ยังไม่มีการจ่ายงานให้บันทึก`,
+        'warning'
+      )
+      return
+    }
+
+    const assignedCount = tasksToSave.filter(
+      t => t.assignee && t.assignee !== 'รอแพลน'
+    ).length
+
     try {
       Swal.fire({
-        title: 'บันทึกแพลนงาน (ปัจจุบัน)',
-        text: `คุณต้องการบันทึกประวัติแพลนงานของภูมิภาค ${region} ที่จัดเตรียมไว้ ณ วันที่ ${new Date(todayStr).toLocaleDateString('th-TH')} ใช่หรือไม่?`,
+        title: 'บันทึกการจ่ายงาน',
+        html:
+          `บันทึกว่า <b>${region}</b> จ่ายงานออกไปแบบนี้<br>` +
+          `เมื่อวันที่ <b>${dispatchDateTh}</b><br><br>` +
+          `<span style="font-size:0.9em;color:#666">` +
+          `งานทั้งหมด ${tasksToSave.length} ใบ · จ่ายให้พนักงานแล้ว ${assignedCount} ใบ` +
+          `</span>`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'บันทึก',
@@ -829,27 +861,38 @@ export default function ManagerPortal() {
       }).then(async (result) => {
         if (result.isConfirmed) {
           Swal.showLoading()
-          const dbKey = `${region}_${todayStr}`
+          const dbKey = `${region}_${dispatchDate}`
           const payload = {
             date: dbKey,
             snapshotData: JSON.stringify({
               tasks: tasksToSave,
               staffs: staffs,
               region: region,
-              actualDate: todayStr // Used for legacy/tracking
+              actualDate: dispatchDate
             })
           }
-          
-          const res = await fetch('/api/history', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          })
 
-          if (res.ok) {
-            Swal.fire('สำเร็จ', `บันทึกประวัติ ณ วันที่ ${new Date(todayStr).toLocaleDateString('th-TH')} เรียบร้อยแล้ว`, 'success')
-          } else {
-            Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกประวัติแพลนงานได้', 'error')
+          try {
+            const res = await fetch('/api/history', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            })
+
+            if (!res.ok) throw new Error(`server responded ${res.status}`)
+
+            Swal.fire(
+              'บันทึกแล้ว',
+              `เก็บการจ่ายงานของ${region} วันที่ ${dispatchDateTh} เรียบร้อย`,
+              'success'
+            )
+          } catch (err) {
+            console.error('Save dispatch record failed:', err)
+            Swal.fire(
+              'บันทึกไม่สำเร็จ',
+              'การจ่ายงานครั้งนี้ยังไม่ถูกบันทึก กรุณาลองใหม่อีกครั้ง',
+              'error'
+            )
           }
         }
       })
@@ -906,7 +949,7 @@ export default function ManagerPortal() {
             </button>
 
             <button onClick={handleSavePlan} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0">
-              <Save size={15} /> บันทึกแพลน
+              <Save size={15} /> บันทึกการจ่ายงาน
             </button>
             <button onClick={() => router.push('/plan-history')} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0">
               <History size={15} className="text-blue-500" /> ประวัติ
