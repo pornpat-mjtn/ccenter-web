@@ -300,6 +300,36 @@ const dbHelper = {
       if (!db) return null
       await db.prepare('DELETE FROM Staff WHERE id = ?').bind(args.where.id).run()
       return { id: args.where.id }
+    },
+
+    async count(args: any = {}) {
+      const rows = await dbHelper.staff.findMany(args)
+      return rows.length
+    },
+
+    /**
+     * Rename a staff member AND every card assigned to them, atomically.
+     *
+     * These used to be two separate writes. If the second one failed — a
+     * dropped connection was enough — the person had their new name while
+     * every one of their cards still referenced the old one. No column then
+     * matched those cards, so they vanished from the board even though the
+     * rows were still in the database.
+     *
+     * D1's batch() runs both statements in a single transaction: either the
+     * rename lands everywhere or nowhere.
+     */
+    async renameWithTasks(id: string, oldName: string, newName: string) {
+      const db = getD1()
+      if (!db) return { renamed: 0 }
+
+      await db.batch([
+        db.prepare('UPDATE Staff SET name = ? WHERE id = ?').bind(newName, id),
+        db.prepare('UPDATE Task SET assignee = ? WHERE assignee = ?').bind(newName, oldName)
+      ])
+
+      const res = await db.prepare('SELECT * FROM Staff WHERE id = ?').bind(id).first()
+      return formatStaff(res)
     }
   },
 

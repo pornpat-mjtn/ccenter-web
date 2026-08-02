@@ -50,7 +50,15 @@ export function middleware(request: NextRequest) {
 
     // Return 401 Unauthorized for API requests
     if (requiresAuth && !token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      // A plain "Unauthorized" gave the manager no idea what to do. The real
+      // situation is almost always an expired session on a tab left open.
+      return NextResponse.json(
+        {
+          error: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+          code: 'SESSION_EXPIRED'
+        },
+        { status: 401 }
+      )
     }
   }
 

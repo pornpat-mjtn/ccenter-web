@@ -27,7 +27,13 @@ export async function POST(request: Request) {
       response.cookies.set('manager_token', 'authenticated', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24, // 24 hours
+        // 30 days. This used to be 24 hours, which expired while a manager
+        // still had the board open. The page kept rendering from data already
+        // loaded, so nothing looked wrong — but every staff action silently
+        // started returning 401 while adding and editing jobs carried on
+        // working, because those endpoints need no login. It looked like a
+        // random bug in staff management.
+        maxAge: 60 * 60 * 24 * 30,
         path: '/'
       })
       return response

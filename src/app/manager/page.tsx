@@ -331,6 +331,24 @@ export default function ManagerPortal() {
   }, [isStaffModalOpen, newStaffRegion])
 
   // Manage Staff functions
+  /**
+   * A 401 here means the login session ran out while the board stayed open.
+   * Every staff action needs a session; adding and editing jobs does not — so
+   * the board carried on working while staff management quietly stopped, and
+   * the old message ("เกิดข้อผิดพลาดในการเชื่อมต่อ") blamed the network for it.
+   * Returns true when it has handled the response.
+   */
+  const handleExpiredSession = (res: Response) => {
+    if (res.status !== 401) return false
+    Swal.fire({
+      icon: 'warning',
+      title: 'เซสชันหมดอายุ',
+      text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง แล้วลองทำรายการเดิม',
+      confirmButtonText: 'ไปหน้าเข้าสู่ระบบ'
+    }).then(() => router.push('/'))
+    return true
+  }
+
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newStaffName.trim()) return
@@ -339,33 +357,32 @@ export default function ManagerPortal() {
       const res = await fetch('/api/staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newStaffName, region: newStaffRegion })
+        body: JSON.stringify({ name: newStaffName.trim(), region: newStaffRegion })
       })
+
+      if (handleExpiredSession(res)) return
+
       const data = await res.json() as any
-      if (data.success) {
-        setNewStaffName('')
-        // Optimistic UI Update
-        if (newStaffRegion === region) {
-          setStaffs(prev => [...prev, data.staff])
-        }
-        setModalStaffs(prev => [...prev, data.staff])
-        setTimeout(loadData, 500)
-        Swal.fire({ icon: 'success', title: 'เพิ่มพนักงานสำเร็จ', timer: 1500, showConfirmButton: false })
-      } else {
-        Swal.fire('Error', 'ไม่สามารถเพิ่มพนักงานได้', 'error')
+      if (!res.ok) {
+        // Show what the server actually said — a duplicate name, a blank name —
+        // instead of a hardcoded connection error.
+        Swal.fire('เพิ่มพนักงานไม่สำเร็จ', data.error || 'ไม่สามารถเพิ่มพนักงานได้', 'error')
+        return
       }
+
+      setNewStaffName('')
+      if (newStaffRegion === region) {
+        setStaffs(prev => [...prev, data.staff])
+      }
+      setModalStaffs(prev => [...prev, data.staff])
+      setTimeout(loadData, 500)
+      Swal.fire({ icon: 'success', title: 'เพิ่มพนักงานสำเร็จ', timer: 1500, showConfirmButton: false })
     } catch (e) {
-      Swal.fire('Error', 'เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error')
+      Swal.fire('เพิ่มพนักงานไม่สำเร็จ', 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่', 'error')
     }
   }
 
   const handleDeleteStaff = async (id: string) => {
-    // Prevent modifying mock staffs
-    if (id.startsWith('day-')) {
-      Swal.fire('ข้อผิดพลาด', 'ไม่สามารถลบวันของสัปดาห์ได้', 'error')
-      return
-    }
-
     const result = await Swal.fire({
       title: 'ลบพนักงานคนนี้?',
       text: "การดำเนินการนี้ไม่สามารถย้อนกลับได้!",
@@ -379,27 +396,26 @@ export default function ManagerPortal() {
     if (result.isConfirmed) {
       try {
         const res = await fetch(`/api/staff/${id}`, { method: 'DELETE' })
+
+        if (handleExpiredSession(res)) return
+
         if (!res.ok) {
           const errData = await res.json() as any
-          throw new Error(errData.error || 'ลบข้อมูลล้มเหลว')
+          Swal.fire('ลบไม่สำเร็จ', errData.error || 'ไม่สามารถลบข้อมูลได้', 'error')
+          loadData()
+          return
         }
-        // Optimistic UI Update
         setStaffs(prev => prev.filter(s => s.id !== id))
         setModalStaffs(prev => prev.filter(s => s.id !== id))
         setTimeout(loadData, 500)
-        Swal.fire('ลบแล้ว!', 'ลบพนักงานเรียบร้อย', 'success')
+        Swal.fire('ลบแล้ว!', 'ลบพนักงานเรียบร้อย งานของคนนี้ถูกย้ายกลับไปที่ "รอแพลน"', 'success')
       } catch (e: any) {
-        Swal.fire('Error', e.message || 'ไม่สามารถลบข้อมูลได้', 'error')
+        Swal.fire('ลบไม่สำเร็จ', 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่', 'error')
       }
     }
   }
 
   const handleEditStaffName = async (staff: Staff) => {
-    // Prevent modifying mock staffs
-    if (staff.id.startsWith('day-')) {
-      Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเปลี่ยนชื่อวันของสัปดาห์ได้', 'error')
-      return
-    }
 
     const { value: newName } = await Swal.fire({
       title: 'เปลี่ยนชื่อพนักงาน',
@@ -412,25 +428,30 @@ export default function ManagerPortal() {
         if (!value) return 'กรุณาระบุชื่อ!'
       }
     })
-    if (newName && newName !== staff.name) {
+    if (newName && newName.trim() !== staff.name) {
+      const finalName = newName.trim()
       try {
         const res = await fetch(`/api/staff/${staff.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: newName })
+          body: JSON.stringify({ name: finalName })
         })
+
+        if (handleExpiredSession(res)) return
+
         if (!res.ok) {
           const errData = await res.json() as any
-          throw new Error(errData.error || 'เปลี่ยนชื่อล้มเหลว')
+          Swal.fire('เปลี่ยนชื่อไม่สำเร็จ', errData.error || 'ไม่สามารถเปลี่ยนชื่อได้', 'error')
+          loadData()
+          return
         }
-        // Optimistic UI Update
-        setStaffs(prev => prev.map(s => s.id === staff.id ? { ...s, name: newName } : s))
-        setModalStaffs(prev => prev.map(s => s.id === staff.id ? { ...s, name: newName } : s))
-        setTasks(prev => prev.map(t => t.assignee === staff.name ? { ...t, assignee: newName } : t))
+        setStaffs(prev => prev.map(s => s.id === staff.id ? { ...s, name: finalName } : s))
+        setModalStaffs(prev => prev.map(s => s.id === staff.id ? { ...s, name: finalName } : s))
+        setTasks(prev => prev.map(t => t.assignee === staff.name ? { ...t, assignee: finalName } : t))
         setTimeout(loadData, 500)
         Swal.fire('สำเร็จ', 'เปลี่ยนชื่อพนักงานและอัปเดตการ์ดงานแล้ว', 'success')
       } catch (e: any) {
-        Swal.fire('ข้อผิดพลาด', e.message || 'ไม่สามารถเปลี่ยนชื่อได้', 'error')
+        Swal.fire('เปลี่ยนชื่อไม่สำเร็จ', 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่', 'error')
       }
     }
   }
@@ -496,17 +517,22 @@ export default function ManagerPortal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ startTime: configStartTime, carPlate: configCarPlate })
       })
+
+      if (handleExpiredSession(res)) return
+
       const data = await res.json() as any
-      if (data.success) {
-        setIsConfigModalOpen(false)
-        // Optimistic UI Update
-        setStaffs(prev => prev.map(s => s.id === selectedStaff.id ? { ...s, startTime: configStartTime, carPlate: configCarPlate } : s))
-        router.refresh()
-        setTimeout(loadData, 500)
-        Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false })
+      if (!res.ok) {
+        Swal.fire('บันทึกไม่สำเร็จ', data.error || 'ไม่สามารถบันทึกได้', 'error')
+        return
       }
+
+      setIsConfigModalOpen(false)
+      setStaffs(prev => prev.map(s => s.id === selectedStaff.id ? { ...s, startTime: configStartTime, carPlate: configCarPlate } : s))
+      router.refresh()
+      setTimeout(loadData, 500)
+      Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false })
     } catch (e) {
-      Swal.fire('Error', 'เกิดข้อผิดพลาดในการบันทึก', 'error')
+      Swal.fire('บันทึกไม่สำเร็จ', 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่', 'error')
     }
   }
 
