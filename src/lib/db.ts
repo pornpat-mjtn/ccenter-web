@@ -179,11 +179,52 @@ const dbHelper = {
       if (args.where && args.where.id && Array.isArray(args.where.id.in)) {
         const ids = args.where.id.in
         if (ids.length === 0) return { count: 0 }
-        const placeholders = ids.map(() => '?').join(',')
-        await db.prepare(`DELETE FROM Task WHERE id IN (${placeholders})`).bind(...ids).run()
+        // Cloudflare D1 allows at most 100 bound parameters per query, so a
+        // single `IN (?, ?, ...)` over a long list fails with "too many SQL
+        // variables" — and because this runs inside GET /api/tasks, that
+        // failure used to take the whole board down with it.
+        const CHUNK = 50
+        for (let i = 0; i < ids.length; i += CHUNK) {
+          const chunk = ids.slice(i, i + CHUNK)
+          const placeholders = chunk.map(() => '?').join(',')
+          await db.prepare(`DELETE FROM Task WHERE id IN (${placeholders})`).bind(...chunk).run()
+        }
         return { count: ids.length }
       }
       return { count: 0 }
+    },
+
+    async count(args: any = {}) {
+      const rows = await dbHelper.task.findMany(args)
+      return rows.length
+    },
+
+    /**
+     * Rewrite the order (and assignee) of many cards in ONE round trip.
+     *
+     * Saving a drag used to fire a separate update per card, each running two
+     * queries (an UPDATE then a SELECT). A column of 30 cards cost 60 queries
+     * in one request, and they were not atomic: a dropped connection halfway
+     * through left the column half-written with no way back.
+     *
+     * D1's batch() sends the whole set as one transaction — either every card
+     * moves or none of them do.
+     */
+    async updateOrders(updates: { id: string; assignee: string; order: number }[]) {
+      const db = getD1()
+      if (!db || !updates || updates.length === 0) return { count: 0 }
+
+      const stmt = db.prepare('UPDATE Task SET assignee = ?, `order` = ? WHERE id = ?')
+      const CHUNK = 50
+
+      for (let i = 0; i < updates.length; i += CHUNK) {
+        const batch = updates
+          .slice(i, i + CHUNK)
+          .map((u) => stmt.bind(u.assignee, u.order, u.id))
+        await db.batch(batch)
+      }
+
+      return { count: updates.length }
     }
   },
 

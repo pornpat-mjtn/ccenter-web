@@ -10,6 +10,18 @@ import Swal from 'sweetalert2'
 
 const REGIONS = ['ภาคกลาง', 'ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
 
+// Stable card ordering: `order` first, then creation time, then id.
+// Without the tie-breakers, cards sharing an `order` value (every card is
+// created with order 0) come back from SQLite in an arbitrary sequence and
+// appear to shuffle themselves between refreshes.
+const compareTasks = (a: any, b: any) => {
+  const byOrder = (a.order ?? 0) - (b.order ?? 0)
+  if (byOrder !== 0) return byOrder
+  const byCreated = String(a.createdAt || '').localeCompare(String(b.createdAt || ''))
+  if (byCreated !== 0) return byCreated
+  return String(a.id || '').localeCompare(String(b.id || ''))
+}
+
 export default function ManagerPortal() {
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => {
@@ -655,6 +667,12 @@ export default function ManagerPortal() {
   }
 
   // Kanban Drag & Drop
+  //
+  // The client is the single source of truth for ordering: it computes the full
+  // new order of every affected column and sends it to the API, which writes it
+  // verbatim. The two used to disagree — the board numbered cards 0,1,2 while
+  // the server rewrote them on a 1000-step scale — so a card snapped back into
+  // its old slot as soon as the page reloaded.
   const handleDragEnd = async (result: any) => {
     if (!result.destination) return
     const { source, destination, draggableId } = result
@@ -663,54 +681,72 @@ export default function ManagerPortal() {
 
     const movedTask = tasks.find(t => t.id === draggableId)
     if (!movedTask) return
-    
-    // Save original state for rollback
-    const originalTasks = [...tasks]
 
-    // 1. Optimistic UI Update (Grouped by the same date to match dateFilter)
-    const taskDate = movedTask.date
-    const otherTasks = tasks.filter(t => 
-      t.id !== draggableId && 
-      !(t.date === taskDate && (t.assignee === source.droppableId || (source.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน')))) &&
-      !(t.date === taskDate && (t.assignee === destination.droppableId || (destination.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))))
-    )
-    
-    let sourceTasks = tasks
-      .filter(t => t.id !== draggableId && t.date === taskDate && (t.assignee === source.droppableId || (source.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))))
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-    
-    let destTasks = tasks
-      .filter(t => t.id !== draggableId && t.date === taskDate && (t.assignee === destination.droppableId || (destination.droppableId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))))
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
+    // Safe to keep as the rollback snapshot: nothing below mutates task objects
+    const originalTasks = tasks
 
-    const updatedMovedTask = { ...movedTask, assignee: destination.droppableId }
+    // A card lives in a column when its assignee matches; unassigned cards sit in "รอแพลน"
+    const inColumn = (t: any, colId: string) =>
+      t.assignee === colId || (colId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน'))
 
-    if (source.droppableId === destination.droppableId) {
-      const colTasks = [...sourceTasks]
-      colTasks.splice(destination.index, 0, updatedMovedTask)
-      colTasks.forEach((t, i) => { t.order = i })
-      setTasks([...otherTasks, ...colTasks])
+    // Only these cards are rendered, so dnd indexes refer to this subset
+    const isVisible = (t: any) => (dateFilter ? t.date.startsWith(dateFilter) : true)
+
+    const columnOf = (colId: string) =>
+      tasks.filter(t => inColumn(t, colId)).sort(compareTasks)
+
+    const sameColumn = source.droppableId === destination.droppableId
+
+    // Full destination column (all dates), minus the card being moved
+    const destColumn = columnOf(destination.droppableId).filter(t => t.id !== draggableId)
+
+    // Translate the visible drop index into an index in the full column
+    const visibleDest = destColumn.filter(isVisible)
+    let insertAt: number
+    if (destination.index >= visibleDest.length) {
+      insertAt = visibleDest.length > 0
+        ? destColumn.indexOf(visibleDest[visibleDest.length - 1]) + 1
+        : destColumn.length
     } else {
-      sourceTasks.forEach((t, i) => { t.order = i })
-      destTasks.splice(destination.index, 0, updatedMovedTask)
-      destTasks.forEach((t, i) => { t.order = i })
-      setTasks([...otherTasks, ...sourceTasks, ...destTasks])
+      insertAt = destColumn.indexOf(visibleDest[destination.index])
     }
 
-    // 2. Call API
+    // Spread keeps every other field intact — including `info`
+    const movedCard = { ...movedTask, assignee: destination.droppableId }
+    const newDestColumn = [...destColumn]
+    newDestColumn.splice(insertAt, 0, movedCard)
+
+    const rewritten: any[] = newDestColumn.map((t, i) => ({ ...t, order: i }))
+    const touchedIds = new Set(rewritten.map(t => t.id))
+
+    if (!sameColumn) {
+      columnOf(source.droppableId)
+        .filter(t => t.id !== draggableId)
+        .map((t, i) => ({ ...t, order: i }))
+        .forEach(t => {
+          rewritten.push(t)
+          touchedIds.add(t.id)
+        })
+    }
+
+    // 1. Optimistic UI update — new objects only, never in-place mutation
+    const untouched = tasks.filter(t => !touchedIds.has(t.id) && t.id !== draggableId)
+    setTasks([...untouched, ...rewritten])
+
+    // 2. Persist the exact same ordering
     try {
-      const payload = {
-        id: draggableId,
-        assignee: destination.droppableId,
-        newIndex: destination.index
-      }
-      
       const res = await fetch('/api/tasks/kanban', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(
+          rewritten.map(t => ({
+            id: t.id,
+            assignee: t.assignee ?? 'รอแพลน',
+            order: t.order
+          }))
+        )
       })
-      
+
       if (!res.ok) throw new Error('Failed to update task order')
     } catch (error) {
       console.error('Drag error:', error)
@@ -953,7 +989,7 @@ export default function ManagerPortal() {
               const colTasks = tasks.filter(t => 
                 (dateFilter ? t.date.startsWith(dateFilter) : true) && 
                 (t.assignee === colId || (colId === 'รอแพลน' && (!t.assignee || t.assignee === 'รอแพลน')))
-              ).sort((a,b) => (a.order || 0) - (b.order || 0))
+              ).sort(compareTasks)
               const colLiftTasksCount = colTasks.filter(t => t.lift).length
               const staff = staffs.find(s => s.name === colId)
               const isSingleStaff = staffFilter !== 'All'

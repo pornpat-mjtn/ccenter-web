@@ -3,80 +3,85 @@ import prisma from '@/lib/db'
 
 export const runtime = 'edge'
 
+type OrderUpdate = { id: string; assignee: string; order: number }
+
+/**
+ * PUT /api/tasks/kanban
+ *
+ * Payload (current): an array of the FULL new ordering for every affected column
+ *   [{ id, assignee, order }, ...]
+ * The server writes exactly what the client sends — it does not compute ordering
+ * itself. This keeps the board on screen and the database perfectly in sync,
+ * which is what stops cards from jumping back after a refresh.
+ *
+ * Payload (legacy): { id, assignee, newIndex } — still supported so that browser
+ * tabs running an older bundle keep working until they reload.
+ */
 export async function PUT(request: Request) {
   try {
-    const data = await request.json() as { id: string, assignee: string, newIndex: number }
-    const { id, assignee, newIndex } = data
-    
+    const body = await request.json() as any
+
+    const updates: OrderUpdate[] = Array.isArray(body)
+      ? body
+      : Array.isArray(body?.updates)
+        ? body.updates
+        : []
+
+    if (updates.length > 0) {
+      const clean = updates.filter(
+        (u) => u && typeof u.id === 'string' && typeof u.order === 'number'
+      )
+
+      if (clean.length === 0) {
+        return NextResponse.json({ error: 'No valid updates supplied' }, { status: 400 })
+      }
+
+      // One batched, atomic write for the whole column — not one round trip
+      // per card. See task.updateOrders in src/lib/db.ts.
+      await prisma.task.updateOrders(
+        clean.map((u) => ({
+          id: u.id,
+          assignee: u.assignee ?? 'รอแพลน',
+          order: u.order
+        }))
+      )
+
+      return NextResponse.json({ success: true, updated: clean.length })
+    }
+
+    // ---- Legacy single-card payload -------------------------------------
+    const id = body?.id
+    const assignee = body?.assignee
+    const newIndex = body?.newIndex
+
     if (!id || typeof newIndex !== 'number') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // 1. Fetch the dragged task to obtain its date
-    const task = await prisma.task.findUnique({
-      where: { id }
-    })
+    const task = await prisma.task.findUnique({ where: { id } })
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
-    const targetDate = task.date
 
-    // 2. Get all tasks in the target assignee's column with the same date and region, sorted by current order
     const tasksInColumn = await prisma.task.findMany({
-      where: { 
-        assignee,
-        date: targetDate,
-        region: task.region
-      },
+      where: { assignee, region: task.region },
       orderBy: { order: 'asc' }
     })
 
-    // 3. Remove the task being moved from this list (if it's already in the same column and same date)
-    const otherTasks = tasksInColumn.filter((t: any) => t.id !== id)
+    const rest = tasksInColumn.filter((t: any) => t.id !== id)
+    const insertAt = Math.max(0, Math.min(newIndex, rest.length))
+    const reordered = [...rest]
+    reordered.splice(insertAt, 0, { id, assignee } as any)
 
-    // 4. Calculate optimized intermediate order
-    let newOrder = 0
-    if (otherTasks.length === 0) {
-      newOrder = 1000
-    } else if (newIndex <= 0) {
-      newOrder = otherTasks[0].order - 1000
-    } else if (newIndex >= otherTasks.length) {
-      newOrder = otherTasks[otherTasks.length - 1].order + 1000
-    } else {
-      const prevOrder = otherTasks[newIndex - 1].order
-      const nextOrder = otherTasks[newIndex].order
-      if (nextOrder - prevOrder > 1) {
-        newOrder = Math.round((prevOrder + nextOrder) / 2)
-      } else {
-        // Fallback: re-index everything in the column only when no integer gap exists
-        const updatedTasks = [...otherTasks]
-        const insertIndex = Math.min(newIndex, otherTasks.length)
-        updatedTasks.splice(insertIndex, 0, { id, assignee } as any)
-        await prisma.$transaction(
-          updatedTasks.map((t, idx) => 
-            prisma.task.update({
-              where: { id: t.id },
-              data: {
-                assignee: t.id === id ? assignee : undefined,
-                order: (idx + 1) * 1000
-              }
-            })
-          )
-        )
-        return NextResponse.json({ success: true })
-      }
-    }
+    await prisma.task.updateOrders(
+      reordered.map((t: any, idx: number) => ({
+        id: t.id,
+        assignee: t.id === id ? assignee : t.assignee,
+        order: idx
+      }))
+    )
 
-    // 5. Update only the moved task
-    await prisma.task.update({
-      where: { id },
-      data: {
-        assignee,
-        order: newOrder
-      }
-    })
-    
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, updated: reordered.length })
   } catch (error: any) {
     console.error(error)
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })

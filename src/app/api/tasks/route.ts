@@ -80,6 +80,23 @@ export async function POST(request: Request) {
       })
       return NextResponse.json({ success: true, task: updated })
     } else {
+      // Give every new card its own slot at the bottom of "รอแพลน".
+      // Creating them all with order 0 left the column full of ties, and SQLite
+      // is free to return tied rows in any sequence — cards appeared to shuffle
+      // themselves between refreshes.
+      let nextOrder = 0
+      try {
+        const waiting = await prisma.task.findMany({
+          where: { assignee: 'รอแพลน', region: data.region },
+          orderBy: { order: 'asc' }
+        })
+        if (waiting.length > 0) {
+          nextOrder = Math.max(...waiting.map((t: any) => t.order || 0)) + 1
+        }
+      } catch (e) {
+        console.error('Could not compute next order, falling back to 0:', e)
+      }
+
       const created = await prisma.task.create({
         data: {
           date: dateObj,
@@ -97,7 +114,7 @@ export async function POST(request: Request) {
           car: data.car,
           info: data.info,
           assignee: 'รอแพลน',
-          order: 0
+          order: nextOrder
         }
       })
       return NextResponse.json({ success: true, task: created })
