@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getRequestContext } from '@cloudflare/next-on-pages'
 
-export const runtime = 'edge'
-
 const LOCK_KEY = 'SystemLocked_CC'
 
 const LOCK_HTML = `<!DOCTYPE html>
