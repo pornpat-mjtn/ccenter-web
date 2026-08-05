@@ -1,10 +1,67 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getRequestContext } from '@cloudflare/next-on-pages'
 
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get('manager_token')
+export const runtime = 'edge'
+
+const LOCK_KEY = 'SystemLocked_CC'
+
+const LOCK_HTML = `<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ระบบไม่พร้อมใช้งาน</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    background: #ffffff; color: #333333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    text-align: center; padding: 24px;
+  }
+  p { font-size: 18px; line-height: 1.7; }
+</style>
+</head>
+<body>
+  <p>ไม่สามารถเข้าใช้งานระบบได้ในขณะนี้<br />กรุณาติดต่อผู้ดูแลระบบ</p>
+</body>
+</html>`
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function isSystemLocked(): Promise<boolean> {
+  try {
+    const ctx = getRequestContext()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = (ctx?.env as any)?.DB
+    if (!db) return false
+    const row = await db.prepare('SELECT value FROM Setting WHERE key = ?').bind(LOCK_KEY).first()
+    return !!row && row.value === '1'
+  } catch {
+    return false
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const method = request.method
+
+  // 0. System lock check — applies to everything except the lock-control
+  // API itself, which must always stay reachable so it can be unlocked.
+  if (!pathname.startsWith('/api/system-lock')) {
+    const locked = await isSystemLocked()
+    if (locked) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'SYSTEM_LOCKED' }, { status: 503 })
+      }
+      return new NextResponse(LOCK_HTML, {
+        status: 503,
+        headers: { 'content-type': 'text/html; charset=utf-8' }
+      })
+    }
+  }
+
+  const token = request.cookies.get('manager_token')
 
   // 1. Protect Manager & Plan History Pages
   if (pathname.startsWith('/manager') || pathname.startsWith('/plan-history')) {
@@ -66,5 +123,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/manager/:path*', '/plan-history/:path*', '/api/:path*']
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|icon.png).*)'
+  ]
 }
