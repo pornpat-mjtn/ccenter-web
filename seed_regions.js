@@ -3,7 +3,7 @@ const prisma = new PrismaClient()
 
 async function main() {
   const days = ['วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์', 'วันอาทิตย์']
-  const regions = ['ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
+  const regions = ['ภาคตะวันออก', 'ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
 
   for (const region of regions) {
     for (const day of days) {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { DAY_BASED_REGIONS } from '@/lib/regions'
 
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     const days = ['วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์', 'วันอาทิตย์']
-    const regions = ['ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
+    const regions = DAY_BASED_REGIONS
     let createdCount = 0
 
     for (const region of regions) {

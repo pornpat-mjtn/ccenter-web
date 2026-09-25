@@ -7,8 +7,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { Task, Staff } from '@/types'
 import { LogOut, MapPin, ZoomIn, ZoomOut, Printer, Users, Cog, Plus, Trash, Bike, Clock, Phone, UserPen, Calendar, X, Edit, Key, RefreshCw, Save, History } from 'lucide-react'
 import Swal from 'sweetalert2'
-
-const REGIONS = ['ภาคกลาง', 'ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
+import { REGIONS } from '@/lib/regions'
 
 // Stable card ordering: `order` first, then creation time, then id.
 // Without the tie-breakers, cards sharing an `order` value (every card is
@@ -1306,10 +1305,7 @@ export default function ManagerPortal() {
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">ภาค *</label>
                     <select required value={taskFormData.region} onChange={e => setTaskFormData({...taskFormData, region: e.target.value})} className="w-full border rounded-lg p-2 outline-none">
-                      <option value="ภาคกลาง">ภาคกลาง</option>
-                      <option value="ภาคเหนือ">ภาคเหนือ</option>
-                      <option value="ภาคอีสาน">ภาคอีสาน</option>
-                      <option value="ภาคใต้">ภาคใต้</option>
+                      {REGIONS.map(reg => <option key={reg} value={reg}>{reg}</option>)}
                     </select>
                   </div>
                 </div>

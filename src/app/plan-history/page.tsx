@@ -5,8 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Printer, Calendar, MapPin, ZoomIn, ZoomOut, Bike, Clock, Phone, UserPen, Trash } from 'lucide-react'
 import Swal from 'sweetalert2'
-
-const REGIONS = ['ภาคกลาง', 'ภาคเหนือ', 'ภาคอีสาน', 'ภาคใต้']
+import { REGIONS } from '@/lib/regions'
 
 export default function PlanHistory() {
   const router = useRouter()

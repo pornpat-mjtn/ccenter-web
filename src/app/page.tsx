@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Task } from '@/types'
 import { Users, Lock, Plus, Clock, UserPen, Phone, MapPin, Edit, Trash, Bike, RefreshCw, History } from 'lucide-react'
 import Swal from 'sweetalert2'
+import { REGIONS } from '@/lib/regions'
 
 export default function StaffPortal() {
   const router = useRouter()
@@ -178,12 +179,9 @@ export default function StaffPortal() {
     (dateFilter ? t.date.startsWith(dateFilter) : true)
   )
 
-  const counts = {
+  const counts: Record<string, number> = {
     'All': tasks.length,
-    'ภาคกลาง': tasks.filter(t => t.region === 'ภาคกลาง').length,
-    'ภาคเหนือ': tasks.filter(t => t.region === 'ภาคเหนือ').length,
-    'ภาคอีสาน': tasks.filter(t => t.region === 'ภาคอีสาน').length,
-    'ภาคใต้': tasks.filter(t => t.region === 'ภาคใต้').length,
+    ...Object.fromEntries(REGIONS.map(r => [r, tasks.filter(t => t.region === r).length])),
   }
 
   return (
@@ -212,7 +210,7 @@ export default function StaffPortal() {
       </nav>
       <div className="max-w-6xl mx-auto px-4">
         {/* Dashboard Filters */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
           {Object.entries(counts).map(([key, count]) => {
             const isActive = filter === key
             return (
@@ -343,10 +341,7 @@ export default function StaffPortal() {
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">ภาค *</label>
                     <select required value={formData.region} onChange={e => setFormData({...formData, region: e.target.value})} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 outline-none text-gray-800 text-sm focus:border-gray-900 focus:ring-2 focus:ring-gray-900/5 transition-all">
-                      <option value="ภาคกลาง">ภาคกลาง</option>
-                      <option value="ภาคเหนือ">ภาคเหนือ</option>
-                      <option value="ภาคอีสาน">ภาคอีสาน</option>
-                      <option value="ภาคใต้">ภาคใต้</option>
+                      {REGIONS.map(reg => <option key={reg} value={reg}>{reg}</option>)}
                     </select>
                   </div>
                 </div>
